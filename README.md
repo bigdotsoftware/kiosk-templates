@@ -15,7 +15,7 @@ Zestaw nowoczesnych, responsywnych szablonów UI do zastosowania w kioskach samo
 
 ## 🚀 Jak używać
  - zmień style CSS, zmień układ wizualny, NIE ZMIENIAJ identyfikatorów obiektów (parametr "id"). Oprogramowanie kiosku na podstawie identyfikatorów uruchomi odpowiednie funkcje
-  - wgraj szbalon do swojego konta https://b2b.bigdotsoftware.eu
+  - wgraj szablon do swojego konta https://b2b.bigdotsoftware.eu
   - Kiosk automatycznie zsychnronizuje się z Twoim kontem B2B i wczyta wgrany szablon
   - Jeśli chcesz zbudować własny interfejs, a aktualny model szablonów nie daje takiej możliwości lub wymaga modyfikacji zachowania, skontaktuj się z nami. Alternatywnie możesz pominąć ładowanie pliku kiosk.js, dodać własny kod oraz przygotować jeden plik HTML zawierający wszystkie niezbędne zależności. Następnie wgraj go na swoje konto w panelu B2B: 👉 https://b2b.bigdotsoftware.eu, a Kiosk automatycznie zsynchronizuje się z Twoim kontem B2B i załaduje wgrany szablon.
 
