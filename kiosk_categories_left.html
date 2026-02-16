@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="pl-PL">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta http-equiv="Content-Language" content="pl">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+
+      <script src="/qrcode.js" defer></script>
+      <!-- <script src="/kiosk.js" defer></script> -->
+      <script>
+        const s = document.createElement('script');
+        s.src = '/kiosk.js?v=' + Date.now();
+        s.defer = true;
+        document.head.appendChild(s);
+      </script>
+
+<title>Kiosk Restaurant</title>
+
+<style>
+:root {
+  --yellow: #ffbc0d;
+  --red: #d62300;
+  --green: #1fa463;
+
+  --bg: #f5f5f5;
+  --card: #ffffff;
+  --text: #111;
+  --muted: #777;
+  --border: #e0e0e0;
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* html, body, * {
+  cursor: none !important;
+} */
+/* ===== CALL SCREEN ===== */
+.call-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #fff;
+  z-index: 6000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.call-main {
+  text-align: center;
+}
+
+.call-label {
+  font-size: 36px;
+  letter-spacing: 2px;
+  opacity: 0.7;
+}
+
+.call-label.small {
+  font-size: 24px;
+  margin-top: 40px;
+}
+
+.call-number {
+  font-size: 160px;
+  font-weight: 700;
+  margin-top: 10px;
+  animation: callPop 0.5s ease;
+}
+
+@keyframes callPop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.call-list {
+  margin-top: 60px;
+  text-align: center;
+}
+
+#callHistory {
+  display: flex;
+  gap: 30px;
+  margin-top: 20px;
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+
+/* ===== LOADER ===== */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  z-index: 3000;
+}
+
+#cartInfo {
+  font-size: 28px;
+  font-weight: 400;
+  font-style: italic;
+  color:#777;
+  /* color: var(--text); */
+}
+
+@keyframes totalPulse {
+  0%   { transform: scale(1);   color: var(--text); }
+  50%  { transform: scale(1.08); color: var(--red); }
+  100% { transform: scale(1);   color: var(--text); }
+}
+
+.total-animate {
+  animation: totalPulse 0.35s ease;
+}
+
+/* ===== HEADER ===== */
+header {
+  height: 140px;
+  background: var(--yellow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  font-size: 36px;
+  font-weight: 600;
+}
+header { position: relative; }
+
+#headerLogo {
+  height: 139px;
+  max-width: 60%;
+  object-fit: contain;
+}
+
+
+/* ===== LAYOUT ===== */
+main {
+  flex: 1;
+  display: flex;
+  min-height: 0; /* <<< KLUCZOWE */
+}
+
+/* ===== MENU ===== */
+#menu {
+  width: 25%;
+  background: white;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-btn {
+  flex: 1;
+  font-size: 28px;
+  background: white;
+  color: var(--text);
+  border: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.menu-btn.active {
+  background: var(--yellow);
+  font-weight: 600;
+}
+
+body.accessibility .menu-btn.active {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+.settings-hidden {
+  opacity: 0;
+  pointer-events: auto;
+  width: 80px;
+  height: 80px;
+}
+
+
+/* klik karty */
+@keyframes addPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.product.add-animate {
+  animation: addPulse 0.25s ease;
+}
+
+/* +1 fly */
+.fly-plus {
+  position: fixed;
+  z-index: 6000;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--red);
+  pointer-events: none;
+  animation: flyToCart 0.6s ease forwards;
+}
+
+@keyframes flyToCart {
+  0%   { opacity: 1; transform: translate(0,0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.6); }
+}
+
+@keyframes removeItemAnim {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 120px;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(40px);
+    max-height: 0;
+    margin: 0;
+  }
+}
+
+.order-item.removing {
+  animation: removeItemAnim 0.35s ease forwards;
+  overflow: hidden;
+}
+
+
+/* ===== PRODUKTY ===== */
+#products {
+  width: 75%;
+  /* touch-action: none; */
+  position: relative;
+  /* overflow-y: auto;
+  -webkit-overflow-scrolling: touch; */
+
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: stretch;
+  /* align-items: start; */
+  /* grid-auto-rows: minmax(380px, auto); */
+
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  height: calc(100vh - 140px - 140px);
+  scrollbar-gutter: stable both-edges;
+}
+#products:active {
+  cursor: grabbing;
+}
+#products.dragging {
+  cursor: grabbing;
+}
+/* ===== SCROLLBAR – KIOSK STYLE ===== */
+#products::-webkit-scrollbar {
+  width: 34px;                 /* gruby – pod dotyk */
+}
+
+#products::-webkit-scrollbar-track {
+  background: #f0f0f0;         /* jasne tło */
+  border-radius: 10px;
+}
+
+#products::-webkit-scrollbar-thumb {
+  background: var(--yellow);   /* kolor brandu */
+  border-radius: 10px;
+  border: 3px solid #f0f0f0;   /* „oddech” */
+}
+
+#products::-webkit-scrollbar-thumb:active {
+  background: var(--red);      /* feedback przy przeciąganiu */
+}
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.order-item img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #f7f7f7;
+}
+
+.order-item-name {
+  flex: 1;
+  font-size: 28px;
+}
+
+.order-item-price {
+  font-size: 20px;
+  font-weight: 600;
+}
+.order-item button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  font-size: 20px;
+  background: #eee;
+}
+
+.order-item button:active {
+  background: #ddd;
+}
+
+.product {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 16px;
+  /* height: 100%; */
+  max-height: 450px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.08),
+    0 8px 20px rgba(0,0,0,0.04);
+}
+
+.product img {
+  width: 100%;
+  height: 200px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-drag: none;
+  -webkit-user-drag: none;
+}
+
+.product h3 {
+  font-size: 22px;
+  flex: 0 0 auto;
+  margin: 10px 0 4px;
+  font-weight: 600;
+}
+
+.price {
+  flex: 0 0 auto;
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.product button {
+  margin-top: 12px;
+  /* margin-top: auto; */
+  font-size: 22px;
+  padding: 14px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  border: none;
+  background: var(--yellow);
+  color: black;
+  font-weight: 600;
+}
+
+/* ===== AD SCREENSAVER ===== */
+.ad {
+  position: fixed;
+  inset: 0;
+  background: black;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* animacje */
+.ad-show {
+  animation: adFadeIn 0.6s ease forwards;
+}
+
+.ad-hide {
+  animation: adFadeOut 0.4s ease forwards;
+}
+
+@keyframes adFadeIn {
+  from { opacity: 0; transform: scale(1.03); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes adFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.03); }
+}
+
+.device-id-qr {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+#device-id-qr {
+  width: 140px;
+  height: 140px;
+  background: #fff;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.qr-hint {
+  font-size: 16px;
+  color: #aaa;
+  max-width: 320px;
+}
+
+/* ===== CART BAR ===== */
+#cartBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  background: white;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  font-size: 28px;
+}
+
+#payBtn {
+  background: var(--red);
+  color: white;
+  border: none;
+  font-size: 28px;
+  padding: 22px 60px;
+  border-radius: 50px;
+}
+
+/* ===== MODAL / BOTTOM SHEET ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: flex-end;
+  z-index: 2000;
+}
+
+.hidden { display: none !important; }
+
+.modal-box {
+  background: white;
+  width: 100%;
+  border-radius: 30px 30px 0 0;
+  padding: 40px;
+  font-size: 32px;
+  animation: slideUp .35s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+#settingsBtn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 28px;
+  text-decoration: none;
+
+  background: rgba(255,255,255,0.6);
+  color: #000;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#settingsBtn:active {
+  transform: scale(0.92);
+}
+
+/* ===== PAYMENT TERMINAL ANIMATION ===== */
+.terminal-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.terminal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: var(--yellow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  animation: terminalPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes terminalPulse {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  50%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1);   opacity: 0.8; }
+}
+
+.terminal-dots::after {
+  content: '';
+  animation: dots 1.5s steps(3, end) infinite;
+}
+
+@keyframes dots {
+  0%   { content: ''; }
+  33%  { content: '.'; }
+  66%  { content: '..'; }
+  100% { content: '...'; }
+}
+
+/* ===== INDETERMINATE PROGRESS BAR ===== */
+.progress-wrap {
+  width: 260px;
+  height: 8px;
+  background: #eee;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    rgba(255,188,13,0.3),
+    rgba(255,188,13,1),
+    rgba(255,188,13,0.3)
+  );
+  border-radius: 999px;
+  animation: progressIndeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes progressIndeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+#screenRotateBtn {
+  position: absolute;
+  top: 24px;
+  right: 116px;           /* <<< obok settingsBtn */
+  
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 26px;
+  background: rgba(255,255,255,0.6);
+  color: #000;
+  border-style: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#screenRotateBtn:active {
+  transform: scale(0.92);
+}
+
+/* ============================= */
+/* DEMO MODAL – KIOSK STYLE */
+/* ============================= */
+
+.demo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+
+  background: rgba(0,0,0,0.45); /* jak inne modale */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* okno jak modal-box */
+.demo-box {
+  background: white;
+  border-radius: 30px;
+  padding: 48px 56px;
+  width: 720px;
+  max-width: 90vw;
+  text-align: center;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+/* badge DEMO – systemowy */
+.demo-badge {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 10px 26px;
+  border-radius: 999px;
+
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+
+  background: var(--red);
+  color: white;
+}
+
+/* tytuł jak nagłówki w modalach */
+.demo-box h2 {
+  font-size: 36px;
+  margin: 10px 0 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* tekst informacyjny */
+.demo-box p {
+  font-size: 26px;
+  color: var(--muted);
+  margin: 14px 0;
+  line-height: 1.4;
+}
+
+/* przycisk – jak CTA w kiosku */
+#demoOkBtn {
+  margin-top: 36px;
+  padding: 22px 70px;
+  font-size: 28px;
+  border-radius: 50px;
+  border: none;
+
+  background: var(--yellow);
+  color: #000;
+  font-weight: 700;
+}
+
+body.accessibility #payNowBtn,
+body.accessibility #doneBtn,
+body.accessibility #demoOkBtn,
+body.accessibility #infoOkBtn {
+  background: #000 !important;
+  color: #fff !important;
+}
+body.accessibility #payment {
+  /* background: #fff !important; */
+  color: #000 !important;
+}
+
+
+#demoOkBtn:active {
+  transform: scale(0.94);
+}
+.menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menu-btn svg {
+  flex-shrink: 0;
+}
+.menu-btn-icon {
+  width:100px;vertical-align:middle;margin-right:8px;margin-left: 20px;
+}
+/* .menu-btn-icon-2 {
+  width:140px;
+} */
+ :focus-visible {
+  outline: 4px solid #000;
+  outline-offset: 4px;
+}
+
+button, [role="button"] {
+  cursor: pointer;
+}
+fieldset {
+  border: none;
+  margin: 20px 0;
+  padding: 0;
+}
+
+legend {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+input[type="radio"] {
+  width: 28px;
+  height: 28px;
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+h2.terminal-status {
+  font-weight: 600;
+  font-size: 32px;
+}
+
+/* ===== ORDER SUMMARY SCROLL ===== */
+#orderItems {
+  max-height: 50vh;              /* ← kluczowe: połowa ekranu */
+  overflow-y: auto;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 8px;            /* miejsce na scrollbar */
+}
+
+#orderItems::-webkit-scrollbar {
+  width: 34px;
+}
+
+#orderItems::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+#orderItems::-webkit-scrollbar-thumb {
+  background: var(--yellow);
+  border-radius: 10px;
+  border: 3px solid #f0f0f0;
+}
+
+
+#orderItems.dragging {
+  cursor: grabbing;
+}
+
+#orderItems.dragging .order-item {
+  pointer-events: none; /* blokada klików podczas scrolla */
+}
+.order-item img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+
+
+
+/* ===== DRAG SCROLL FEEDBACK ===== */
+#products.dragging {
+  cursor: grabbing;
+}
+
+#products.dragging .product {
+  pointer-events: none; /* blokada klików podczas scrolla */
+  opacity: 0.95;
+}
+
+
+#accessibilityBtn {
+  position: absolute;
+  top: 24px;
+  right: 208px;          /* obok rotateBtn */
+
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 26px;
+  background: rgba(255,255,255,0.6);
+  color: #000;
+  border-style: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#accessibilityBtn:active {
+  transform: scale(0.92);
+}
+
+
+/* ===== ACCESSIBILITY MODE ===== */
+body.accessibility {
+  background: #000;
+  color: #fff;
+  font-size: 120%;
+}
+
+body.accessibility header {
+  background: #000;
+  color: #fff;
+}
+
+body.accessibility .product {
+  background: #000;
+  border: 3px solid #fff;
+}
+
+body.accessibility .product h3,
+body.accessibility .price {
+  color: #fff;
+}
+
+body.accessibility button {
+  background: #fff !important;
+  color: #000 !important;
+  font-weight: 700;
+}
+
+body.accessibility #cartBar {
+  background: #000;
+  border-top: 3px solid #fff;
+}
+
+body.accessibility #total,
+body.accessibility #cartInfo {
+  color: #fff;
+  font-size: 130%;
+}
+
+body.accessibility #orderList {
+  color: #000;
+}
+
+#audioBtn {
+  position: absolute;
+  top: 24px;
+  right: 300px; /* na lewo od accessibilityBtn */
+
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 26px;
+  background: rgba(255,255,255,0.6);
+  color: #000;
+  border-style: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#audioBtn:active {
+  transform: scale(0.92);
+}
+#payment :focus-visible {
+  outline: 4px solid #000;
+  outline-offset: 4px;
+}
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+.skip-link:focus {
+  left: 20px;
+  top: 20px;
+  background: #000;
+  color: #fff;
+  padding: 12px 20px;
+  z-index: 10000;
+}
+</style>
+
+</head>
+
+<body>
+  <a href="#products" class="skip-link">Przejdź do listy produktów</a>
+<div id="loader" role="status" aria-live="polite" aria-busy="true">Ładowanie menu…</div>
+
+<header role="banner">
+  <img src="header-logo.png" alt="Logo" id="headerLogo">
+
+  <button id="audioBtn" aria-label="Audio guidance" type="button">
+  
+<svg aria-hidden="true" id="Graphic_element" data-name="Graphic element" width="48" height="48" 
+xmlns="http://www.w3.org/2000/svg" fill="#ffbc0d" viewBox="0 0 512 512"><path d="M40.55,251.45V419a48,48,0,0,0,47.88,47.88h47.88A48,48,0,0,0,184.19,419V323.27a48,48,0,0,0-47.88-47.88H88.43V251.45a167.58,167.58,0,0,1,335.15,0v23.94H375.7a48,48,0,0,0-47.87,47.88V419a48,48,0,0,0,47.87,47.88h47.88A48,48,0,0,0,471.46,419V251.45C471.46,132.48,375,36,256,36S40.55,132.48,40.55,251.45Z"/></svg>
+</button>
+
+  <button id="accessibilityBtn" aria-label="Tryb wysokiego kontrastu" type="button">
+  
+    <svg fill="#ffbc0d" width="48" height="48" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M256,112a56,56,0,1,1,56-56A56.06,56.06,0,0,1,256,112Z"/><path d="M432,112.8l-.45.12h0l-.42.13c-1,.28-2,.58-3,.89-18.61,5.46-108.93,30.92-172.56,30.92-59.13,0-141.28-22-167.56-29.47a73.79,73.79,0,0,0-8-2.58c-19-5-32,14.3-32,31.94,0,17.47,15.7,25.79,31.55,31.76v.28l95.22,29.74c9.73,3.73,12.33,7.54,13.6,10.84,4.13,10.59.83,31.56-.34,38.88l-5.8,45L150.05,477.44q-.15.72-.27,1.47l-.23,1.27h0c-2.32,16.15,9.54,31.82,32,31.82,19.6,0,28.25-13.53,32-31.94h0s28-157.57,42-157.57,42.84,157.57,42.84,157.57h0c3.75,18.41,12.4,31.94,32,31.94,22.52,0,34.38-15.74,32-31.94-.21-1.38-.46-2.74-.76-4.06L329,301.27l-5.79-45c-4.19-26.21-.82-34.87.32-36.9a1.09,1.09,0,0,0,.08-.15c1.08-2,6-6.48,17.48-10.79l89.28-31.21a16.9,16.9,0,0,0,1.62-.52c16-6,32-14.3,32-31.93S451,107.81,432,112.8Z"/></svg>
+
+    
+  </button>
+
+  <button id="screenRotateBtn"
+        type="button"
+        aria-label="Obróć ekran o 180 stopni">    
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" aria-hidden="true" viewBox="0 0 512 512">
+      <path fill="#ffbc0d" d="M338,60h6v1h-6zM336,61h11v1h-11zM334,62h15v1h-15zM333,63h17v1h-17zM331,64h20v1h-20zM329,65h23v1h-23zM328,66h25v1h-25zM326,67h28v1h-28zM324,68h30v1h-30zM322,69h33v1h-33zM321,70h34v1h-34zM319,71h36v1h-36zM318,72h37v1h-37zM316,73h39v1h-39zM314,74h42v1h-42zM313,75h43v1h-43zM311,76h44v1h-44zM310,77h45v1h-45zM309,78h46v1h-46zM307,79h48v1h-48zM203,80h16v1h-16zM306,80h48v1h-48zM199,81h24v1h-24zM304,81h50v1h-50zM196,82h30v1h-30zM303,82h50v1h-50zM193,83h36v1h-36zM303,83h50v1h-50zM192,84h39v1h-39zM302,84h50v1h-50zM190,85h43v1h-43zM301,85h50v1h-50zM188,86h47v1h-47zM301,86h49v1h-49zM187,87h49v1h-49zM300,87h54v1h-54zM185,88h53v1h-53zM300,88h57v1h-57zM184,89h55v1h-55zM300,89h61v1h-61zM183,90h57v1h-57zM299,90h64v1h-64zM182,91h60v1h-60zM299,91h67v1h-67zM181,92h62v1h-62zM299,92h69v1h-69zM180,93h64v1h-64zM299,93h72v1h-72zM179,94h66v1h-66zM300,94h73v1h-73zM178,95h68v1h-68zM300,95h75v1h-75zM177,96h70v1h-70zM300,96h77v1h-77zM176,97h72v1h-72zM301,97h78v1h-78zM175,98h74v1h-74zM301,98h80v1h-80zM174,99h76v1h-76zM302,99h81v1h-81zM173,100h78v1h-78zM302,100h83v1h-83zM172,101h80v1h-80zM303,101h83v1h-83zM171,102h82v1h-82zM303,102h85v1h-85zM170,103h84v1h-84zM304,103h86v1h-86zM169,104h86v1h-86zM304,104h87v1h-87zM168,105h88v1h-88zM305,105h88v1h-88zM167,106h90v1h-90zM305,106h89v1h-89zM166,107h92v1h-92zM306,107h90v1h-90zM165,108h42v1h-42zM214,108h45v1h-45zM306,108h91v1h-91zM164,109h41v1h-41zM217,109h43v1h-43zM307,109h91v1h-91zM163,110h41v1h-41zM219,110h42v1h-42zM307,110h93v1h-93zM162,111h41v1h-41zM220,111h42v1h-42zM308,111h93v1h-93zM161,112h41v1h-41zM222,112h41v1h-41zM308,112h94v1h-94zM160,113h41v1h-41zM223,113h41v1h-41zM309,113h94v1h-94zM159,114h41v1h-41zM224,114h41v1h-41zM309,114h96v1h-96zM158,115h41v1h-41zM225,115h41v1h-41zM310,115h33v1h-33zM345,115h61v1h-61zM157,116h41v1h-41zM226,116h41v1h-41zM311,116h33v1h-33zM349,116h58v1h-58zM156,117h41v1h-41zM227,117h41v1h-41zM311,117h33v1h-33zM352,117h56v1h-56zM155,118h41v1h-41zM228,118h41v1h-41zM312,118h32v1h-32zM355,118h54v1h-54zM154,119h41v1h-41zM229,119h41v1h-41zM312,119h32v1h-32zM357,119h53v1h-53zM153,120h41v1h-41zM230,120h41v1h-41zM313,120h31v1h-31zM360,120h51v1h-51zM152,121h41v1h-41zM231,121h41v1h-41zM314,121h30v1h-30zM362,121h50v1h-50zM151,122h41v1h-41zM232,122h41v1h-41zM314,122h30v1h-30zM364,122h49v1h-49zM150,123h41v1h-41zM233,123h41v1h-41zM315,123h29v1h-29zM366,123h48v1h-48zM149,124h41v1h-41zM234,124h41v1h-41zM316,124h28v1h-28zM368,124h47v1h-47zM148,125h41v1h-41zM235,125h41v1h-41zM316,125h28v1h-28zM369,125h47v1h-47zM147,126h41v1h-41zM236,126h41v1h-41zM317,126h26v1h-26zM371,126h46v1h-46zM146,127h41v1h-41zM237,127h41v1h-41zM318,127h25v1h-25zM373,127h45v1h-45zM145,128h41v1h-41zM238,128h41v1h-41zM318,128h24v1h-24zM374,128h45v1h-45zM144,129h41v1h-41zM239,129h41v1h-41zM319,129h23v1h-23zM376,129h44v1h-44zM143,130h41v1h-41zM240,130h41v1h-41zM320,130h21v1h-21zM377,130h44v1h-44zM142,131h41v1h-41zM241,131h41v1h-41zM321,131h19v1h-19zM378,131h43v1h-43zM141,132h41v1h-41zM242,132h41v1h-41zM322,132h17v1h-17zM380,132h42v1h-42zM140,133h41v1h-41zM243,133h41v1h-41zM323,133h15v1h-15zM381,133h42v1h-42zM139,134h41v1h-41zM244,134h41v1h-41zM325,134h11v1h-11zM382,134h42v1h-42zM138,135h41v1h-41zM245,135h41v1h-41zM328,135h6v1h-6zM384,135h41v1h-41zM137,136h41v1h-41zM246,136h41v1h-41zM385,136h40v1h-40zM136,137h41v1h-41zM247,137h41v1h-41zM386,137h40v1h-40zM135,138h41v1h-41zM248,138h41v1h-41zM388,138h39v1h-39zM134,139h41v1h-41zM249,139h41v1h-41zM389,139h39v1h-39zM133,140h41v1h-41zM250,140h41v1h-41zM390,140h38v1h-38zM132,141h41v1h-41zM251,141h41v1h-41zM391,141h38v1h-38zM131,142h41v1h-41zM252,142h41v1h-41zM392,142h38v1h-38zM130,143h41v1h-41zM253,143h41v1h-41zM393,143h37v1h-37zM129,144h41v1h-41zM254,144h41v1h-41zM394,144h37v1h-37zM128,145h41v1h-41zM255,145h41v1h-41zM395,145h37v1h-37zM127,146h41v1h-41zM256,146h41v1h-41zM396,146h36v1h-36zM126,147h41v1h-41zM257,147h41v1h-41zM397,147h36v1h-36zM125,148h41v1h-41zM258,148h41v1h-41zM398,148h36v1h-36zM124,149h41v1h-41zM259,149h41v1h-41zM399,149h35v1h-35zM123,150h41v1h-41zM260,150h41v1h-41zM399,150h36v1h-36zM122,151h41v1h-41zM261,151h41v1h-41zM400,151h35v1h-35zM121,152h41v1h-41zM262,152h41v1h-41zM401,152h35v1h-35zM120,153h41v1h-41zM263,153h41v1h-41zM402,153h35v1h-35zM119,154h41v1h-41zM264,154h41v1h-41zM402,154h35v1h-35zM118,155h41v1h-41zM265,155h41v1h-41zM403,155h35v1h-35zM117,156h41v1h-41zM266,156h41v1h-41zM404,156h34v1h-34zM116,157h41v1h-41zM267,157h41v1h-41zM404,157h35v1h-35zM115,158h41v1h-41zM268,158h41v1h-41zM405,158h34v1h-34zM114,159h41v1h-41zM269,159h41v1h-41zM406,159h34v1h-34zM113,160h41v1h-41zM270,160h41v1h-41zM406,160h34v1h-34zM112,161h41v1h-41zM271,161h41v1h-41zM407,161h34v1h-34zM111,162h41v1h-41zM272,162h41v1h-41zM407,162h34v1h-34zM110,163h41v1h-41zM273,163h41v1h-41zM408,163h33v1h-33zM109,164h41v1h-41zM274,164h41v1h-41zM409,164h33v1h-33zM108,165h41v1h-41zM275,165h41v1h-41zM409,165h33v1h-33zM107,166h41v1h-41zM276,166h41v1h-41zM410,166h33v1h-33zM106,167h41v1h-41zM277,167h41v1h-41zM410,167h33v1h-33zM105,168h41v1h-41zM278,168h41v1h-41zM411,168h33v1h-33zM104,169h41v1h-41zM279,169h41v1h-41zM411,169h33v1h-33zM103,170h41v1h-41zM280,170h41v1h-41zM412,170h32v1h-32zM102,171h41v1h-41zM281,171h41v1h-41zM412,171h33v1h-33zM101,172h41v1h-41zM282,172h41v1h-41zM413,172h32v1h-32zM100,173h41v1h-41zM283,173h41v1h-41zM413,173h32v1h-32zM99,174h41v1h-41zM284,174h41v1h-41zM413,174h33v1h-33zM98,175h41v1h-41zM285,175h41v1h-41zM414,175h32v1h-32zM97,176h41v1h-41zM286,176h41v1h-41zM414,176h32v1h-32zM96,177h41v1h-41zM287,177h41v1h-41zM415,177h32v1h-32zM95,178h41v1h-41zM288,178h41v1h-41zM415,178h32v1h-32zM94,179h41v1h-41zM289,179h41v1h-41zM416,179h31v1h-31zM93,180h41v1h-41zM290,180h41v1h-41zM416,180h32v1h-32zM92,181h41v1h-41zM291,181h41v1h-41zM416,181h32v1h-32zM91,182h41v1h-41zM292,182h41v1h-41zM417,182h31v1h-31zM90,183h41v1h-41zM293,183h41v1h-41zM417,183h31v1h-31zM89,184h41v1h-41zM294,184h41v1h-41zM417,184h32v1h-32zM88,185h41v1h-41zM295,185h41v1h-41zM418,185h31v1h-31zM88,186h40v1h-40zM296,186h41v1h-41zM418,186h31v1h-31zM87,187h40v1h-40zM297,187h41v1h-41zM418,187h31v1h-31zM86,188h40v1h-40zM298,188h41v1h-41zM419,188h31v1h-31zM86,189h39v1h-39zM299,189h41v1h-41zM419,189h31v1h-31zM85,190h39v1h-39zM300,190h41v1h-41zM419,190h31v1h-31zM85,191h38v1h-38zM301,191h41v1h-41zM419,191h31v1h-31zM84,192h38v1h-38zM302,192h41v1h-41zM420,192h30v1h-30zM84,193h37v1h-37zM303,193h41v1h-41zM420,193h30v1h-30zM83,194h37v1h-37zM304,194h41v1h-41zM420,194h30v1h-30zM83,195h36v1h-36zM305,195h41v1h-41zM421,195h29v1h-29zM82,196h36v1h-36zM306,196h41v1h-41zM421,196h29v1h-29zM82,197h35v1h-35zM307,197h41v1h-41zM421,197h29v1h-29zM82,198h34v1h-34zM308,198h41v1h-41zM421,198h29v1h-29zM81,199h34v1h-34zM309,199h41v1h-41zM421,199h29v1h-29zM81,200h33v1h-33zM310,200h41v1h-41zM422,200h28v1h-28zM81,201h32v1h-32zM312,201h40v1h-40zM422,201h28v1h-28zM81,202h31v1h-31zM313,202h40v1h-40zM422,202h27v1h-27zM81,203h30v1h-30zM314,203h40v1h-40zM423,203h26v1h-26zM81,204h29v1h-29zM315,204h40v1h-40zM423,204h25v1h-25zM80,205h30v1h-30zM316,205h40v1h-40zM424,205h24v1h-24zM80,206h30v1h-30zM317,206h40v1h-40zM425,206h22v1h-22zM80,207h29v1h-29zM318,207h40v1h-40zM426,207h20v1h-20zM80,208h29v1h-29zM319,208h40v1h-40zM427,208h18v1h-18zM80,209h29v1h-29zM320,209h40v1h-40zM429,209h15v1h-15zM80,210h29v1h-29zM321,210h40v1h-40zM431,210h11v1h-11zM80,211h29v1h-29zM322,211h40v1h-40zM80,212h29v1h-29zM323,212h40v1h-40zM80,213h29v1h-29zM324,213h40v1h-40zM81,214h29v1h-29zM325,214h40v1h-40zM81,215h29v1h-29zM326,215h40v1h-40zM81,216h29v1h-29zM327,216h40v1h-40zM81,217h30v1h-30zM328,217h40v1h-40zM81,218h30v1h-30zM329,218h40v1h-40zM81,219h31v1h-31zM330,219h40v1h-40zM82,220h30v1h-30zM331,220h40v1h-40zM82,221h31v1h-31zM332,221h40v1h-40zM82,222h32v1h-32zM333,222h40v1h-40zM82,223h33v1h-33zM334,223h41v1h-41zM83,224h33v1h-33zM335,224h41v1h-41zM83,225h34v1h-34zM336,225h41v1h-41zM84,226h34v1h-34zM337,226h41v1h-41zM84,227h35v1h-35zM338,227h41v1h-41zM84,228h36v1h-36zM339,228h41v1h-41zM85,229h36v1h-36zM340,229h41v1h-41zM85,230h37v1h-37zM341,230h41v1h-41zM86,231h37v1h-37zM342,231h41v1h-41zM86,232h38v1h-38zM343,232h41v1h-41zM87,233h38v1h-38zM344,233h41v1h-41zM88,234h38v1h-38zM345,234h41v1h-41zM88,235h39v1h-39zM346,235h41v1h-41zM89,236h39v1h-39zM347,236h41v1h-41zM90,237h39v1h-39zM348,237h41v1h-41zM90,238h40v1h-40zM349,238h41v1h-41zM91,239h40v1h-40zM350,239h41v1h-41zM92,240h40v1h-40zM351,240h41v1h-41zM93,241h40v1h-40zM352,241h41v1h-41zM94,242h40v1h-40zM353,242h41v1h-41zM95,243h40v1h-40zM354,243h41v1h-41zM96,244h40v1h-40zM355,244h41v1h-41zM97,245h40v1h-40zM356,245h41v1h-41zM98,246h40v1h-40zM357,246h41v1h-41zM99,247h40v1h-40zM358,247h41v1h-41zM100,248h40v1h-40zM359,248h41v1h-41zM101,249h40v1h-40zM360,249h41v1h-41zM102,250h40v1h-40zM361,250h41v1h-41zM103,251h40v1h-40zM362,251h41v1h-41zM104,252h40v1h-40zM363,252h41v1h-41zM105,253h40v1h-40zM364,253h41v1h-41zM106,254h40v1h-40zM365,254h41v1h-41zM107,255h40v1h-40zM366,255h41v1h-41zM108,256h40v1h-40zM367,256h41v1h-41zM109,257h40v1h-40zM368,257h41v1h-41zM110,258h40v1h-40zM369,258h41v1h-41zM111,259h40v1h-40zM370,259h41v1h-41zM112,260h40v1h-40zM371,260h41v1h-41zM113,261h40v1h-40zM372,261h41v1h-41zM114,262h40v1h-40zM373,262h41v1h-41zM115,263h40v1h-40zM374,263h41v1h-41zM116,264h40v1h-40zM375,264h41v1h-41zM117,265h40v1h-40zM376,265h41v1h-41zM118,266h40v1h-40zM377,266h41v1h-41zM119,267h40v1h-40zM378,267h41v1h-41zM120,268h40v1h-40zM379,268h41v1h-41zM121,269h40v1h-40zM380,269h41v1h-41zM122,270h40v1h-40zM381,270h40v1h-40zM123,271h40v1h-40zM382,271h40v1h-40zM124,272h40v1h-40zM383,272h40v1h-40zM125,273h40v1h-40zM384,273h40v1h-40zM126,274h40v1h-40zM385,274h40v1h-40zM127,275h40v1h-40zM386,275h39v1h-39zM128,276h40v1h-40zM387,276h39v1h-39zM129,277h40v1h-40zM388,277h38v1h-38zM130,278h40v1h-40zM389,278h38v1h-38zM131,279h40v1h-40zM390,279h38v1h-38zM132,280h40v1h-40zM391,280h37v1h-37zM133,281h40v1h-40zM392,281h37v1h-37zM134,282h40v1h-40zM393,282h36v1h-36zM135,283h40v1h-40zM394,283h36v1h-36zM136,284h40v1h-40zM395,284h35v1h-35zM137,285h40v1h-40zM396,285h34v1h-34zM138,286h40v1h-40zM397,286h34v1h-34zM139,287h40v1h-40zM398,287h33v1h-33zM140,288h40v1h-40zM399,288h32v1h-32zM141,289h40v1h-40zM400,289h32v1h-32zM142,290h40v1h-40zM401,290h31v1h-31zM143,291h40v1h-40zM401,291h31v1h-31zM144,292h40v1h-40zM402,292h30v1h-30zM145,293h40v1h-40zM402,293h31v1h-31zM146,294h40v1h-40zM403,294h30v1h-30zM147,295h40v1h-40zM403,295h30v1h-30zM148,296h40v1h-40zM404,296h29v1h-29zM149,297h40v1h-40zM404,297h29v1h-29zM150,298h40v1h-40zM404,298h29v1h-29zM151,299h40v1h-40zM404,299h29v1h-29zM152,300h40v1h-40zM404,300h29v1h-29zM153,301h40v1h-40zM404,301h29v1h-29zM84,302h8v1h-8zM154,302h40v1h-40zM404,302h29v1h-29zM82,303h13v1h-13zM155,303h40v1h-40zM404,303h29v1h-29zM80,304h17v1h-17zM156,304h40v1h-40zM404,304h29v1h-29zM79,305h19v1h-19zM157,305h40v1h-40zM404,305h29v1h-29zM78,306h22v1h-22zM158,306h40v1h-40zM403,306h30v1h-30zM78,307h23v1h-23zM159,307h40v1h-40zM403,307h30v1h-30zM77,308h24v1h-24zM160,308h40v1h-40zM402,308h31v1h-31zM77,309h25v1h-25zM161,309h40v1h-40zM401,309h32v1h-32zM76,310h26v1h-26zM162,310h40v1h-40zM400,310h32v1h-32zM76,311h27v1h-27zM163,311h40v1h-40zM399,311h33v1h-33zM76,312h27v1h-27zM164,312h40v1h-40zM398,312h34v1h-34zM76,313h27v1h-27zM165,313h40v1h-40zM397,313h35v1h-35zM76,314h28v1h-28zM166,314h40v1h-40zM396,314h35v1h-35zM76,315h28v1h-28zM167,315h40v1h-40zM395,315h36v1h-36zM76,316h28v1h-28zM168,316h40v1h-40zM394,316h36v1h-36zM76,317h28v1h-28zM169,317h40v1h-40zM393,317h37v1h-37zM76,318h28v1h-28zM170,318h40v1h-40zM392,318h38v1h-38zM76,319h29v1h-29zM171,319h40v1h-40zM391,319h38v1h-38zM76,320h29v1h-29zM172,320h40v1h-40zM390,320h39v1h-39zM77,321h28v1h-28zM173,321h40v1h-40zM389,321h39v1h-39zM77,322h29v1h-29zM174,322h40v1h-40zM388,322h39v1h-39zM77,323h29v1h-29zM175,323h40v1h-40zM387,323h40v1h-40zM77,324h29v1h-29zM176,324h40v1h-40zM386,324h40v1h-40zM77,325h29v1h-29zM177,325h40v1h-40zM385,325h40v1h-40zM78,326h29v1h-29zM178,326h40v1h-40zM384,326h40v1h-40zM78,327h29v1h-29zM179,327h40v1h-40zM383,327h41v1h-41zM78,328h29v1h-29zM180,328h40v1h-40zM382,328h41v1h-41zM78,329h30v1h-30zM181,329h40v1h-40zM381,329h41v1h-41zM79,330h29v1h-29zM182,330h40v1h-40zM380,330h41v1h-41zM79,331h29v1h-29zM183,331h40v1h-40zM379,331h41v1h-41zM79,332h30v1h-30zM184,332h40v1h-40zM378,332h41v1h-41zM80,333h29v1h-29zM185,333h40v1h-40zM377,333h41v1h-41zM80,334h30v1h-30zM186,334h40v1h-40zM376,334h41v1h-41zM80,335h30v1h-30zM187,335h40v1h-40zM375,335h41v1h-41zM81,336h29v1h-29zM188,336h40v1h-40zM374,336h41v1h-41zM81,337h30v1h-30zM189,337h40v1h-40zM373,337h41v1h-41zM81,338h30v1h-30zM190,338h40v1h-40zM372,338h41v1h-41zM82,339h30v1h-30zM191,339h40v1h-40zM371,339h41v1h-41zM82,340h30v1h-30zM192,340h40v1h-40zM370,340h41v1h-41zM82,341h30v1h-30zM193,341h40v1h-40zM369,341h41v1h-41zM83,342h30v1h-30zM194,342h40v1h-40zM368,342h41v1h-41zM83,343h30v1h-30zM195,343h40v1h-40zM367,343h41v1h-41zM84,344h30v1h-30zM196,344h40v1h-40zM366,344h41v1h-41zM84,345h30v1h-30zM197,345h40v1h-40zM365,345h41v1h-41zM84,346h31v1h-31zM198,346h40v1h-40zM364,346h41v1h-41zM85,347h30v1h-30zM199,347h40v1h-40zM363,347h41v1h-41zM85,348h31v1h-31zM200,348h40v1h-40zM362,348h41v1h-41zM86,349h30v1h-30zM201,349h40v1h-40zM361,349h41v1h-41zM86,350h31v1h-31zM202,350h40v1h-40zM360,350h41v1h-41zM87,351h31v1h-31zM203,351h40v1h-40zM359,351h41v1h-41zM87,352h31v1h-31zM204,352h40v1h-40zM358,352h41v1h-41zM88,353h31v1h-31zM205,353h40v1h-40zM357,353h41v1h-41zM88,354h31v1h-31zM206,354h40v1h-40zM356,354h41v1h-41zM89,355h31v1h-31zM207,355h40v1h-40zM354,355h42v1h-42zM89,356h32v1h-32zM208,356h40v1h-40zM353,356h42v1h-42zM90,357h31v1h-31zM209,357h40v1h-40zM352,357h42v1h-42zM90,358h32v1h-32zM210,358h40v1h-40zM351,358h42v1h-42zM91,359h32v1h-32zM211,359h40v1h-40zM350,359h42v1h-42zM91,360h33v1h-33zM212,360h40v1h-40zM349,360h42v1h-42zM92,361h32v1h-32zM213,361h40v1h-40zM348,361h42v1h-42zM93,362h32v1h-32zM214,362h40v1h-40zM347,362h42v1h-42zM93,363h33v1h-33zM215,363h40v1h-40zM346,363h42v1h-42zM94,364h33v1h-33zM216,364h40v1h-40zM345,364h42v1h-42zM94,365h33v1h-33zM217,365h40v1h-40zM344,365h42v1h-42zM95,366h33v1h-33zM218,366h40v1h-40zM343,366h42v1h-42zM96,367h33v1h-33zM219,367h40v1h-40zM342,367h42v1h-42zM96,368h34v1h-34zM220,368h40v1h-40zM341,368h42v1h-42zM97,369h34v1h-34zM221,369h40v1h-40zM340,369h42v1h-42zM98,370h34v1h-34zM222,370h40v1h-40zM339,370h42v1h-42zM98,371h35v1h-35zM223,371h40v1h-40zM338,371h42v1h-42zM99,372h35v1h-35zM224,372h40v1h-40zM337,372h42v1h-42zM100,373h35v1h-35zM225,373h40v1h-40zM336,373h42v1h-42zM101,374h36v1h-36zM226,374h40v1h-40zM335,374h42v1h-42zM101,375h37v1h-37zM227,375h40v1h-40zM334,375h42v1h-42zM102,376h37v1h-37zM183,376h6v1h-6zM228,376h40v1h-40zM333,376h42v1h-42zM103,377h37v1h-37zM181,377h11v1h-11zM229,377h40v1h-40zM332,377h42v1h-42zM104,378h38v1h-38zM179,378h15v1h-15zM230,378h40v1h-40zM331,378h42v1h-42zM104,379h39v1h-39zM178,379h17v1h-17zM231,379h40v1h-40zM330,379h42v1h-42zM105,380h39v1h-39zM177,380h19v1h-19zM232,380h40v1h-40zM329,380h42v1h-42zM106,381h40v1h-40zM176,381h21v1h-21zM233,381h40v1h-40zM328,381h42v1h-42zM107,382h40v1h-40zM175,382h23v1h-23zM234,382h40v1h-40zM327,382h42v1h-42zM108,383h40v1h-40zM174,383h25v1h-25zM235,383h40v1h-40zM326,383h42v1h-42zM109,384h41v1h-41zM174,384h25v1h-25zM236,384h40v1h-40zM325,384h42v1h-42zM110,385h42v1h-42zM173,385h27v1h-27zM237,385h40v1h-40zM324,385h42v1h-42zM111,386h42v1h-42zM173,386h28v1h-28zM238,386h40v1h-40zM323,386h42v1h-42zM112,387h43v1h-43zM173,387h29v1h-29zM239,387h40v1h-40zM322,387h42v1h-42zM113,388h44v1h-44zM172,388h30v1h-30zM240,388h40v1h-40zM321,388h42v1h-42zM114,389h45v1h-45zM172,389h31v1h-31zM241,389h40v1h-40zM320,389h42v1h-42zM115,390h46v1h-46zM172,390h32v1h-32zM242,390h40v1h-40zM319,390h42v1h-42zM116,391h47v1h-47zM172,391h33v1h-33zM243,391h40v1h-40zM318,391h42v1h-42zM117,392h48v1h-48zM172,392h33v1h-33zM244,392h40v1h-40zM317,392h42v1h-42zM118,393h49v1h-49zM172,393h34v1h-34zM245,393h40v1h-40zM316,393h42v1h-42zM119,394h51v1h-51zM172,394h35v1h-35zM246,394h40v1h-40zM315,394h42v1h-42zM120,395h52v1h-52zM173,395h34v1h-34zM247,395h40v1h-40zM314,395h42v1h-42zM121,396h87v1h-87zM248,396h41v1h-41zM313,396h42v1h-42zM122,397h87v1h-87zM249,397h41v1h-41zM312,397h42v1h-42zM123,398h86v1h-86zM250,398h41v1h-41zM311,398h42v1h-42zM125,399h85v1h-85zM251,399h41v1h-41zM310,399h42v1h-42zM126,400h85v1h-85zM252,400h42v1h-42zM309,400h42v1h-42zM127,401h84v1h-84zM253,401h43v1h-43zM308,401h42v1h-42zM128,402h84v1h-84zM254,402h44v1h-44zM307,402h42v1h-42zM130,403h83v1h-83zM255,403h47v1h-47zM304,403h44v1h-44zM131,404h82v1h-82zM256,404h91v1h-91zM133,405h81v1h-81zM257,405h89v1h-89zM134,406h80v1h-80zM258,406h87v1h-87zM136,407h79v1h-79zM259,407h85v1h-85zM137,408h79v1h-79zM260,408h83v1h-83zM139,409h77v1h-77zM261,409h81v1h-81zM140,410h77v1h-77zM262,410h79v1h-79zM142,411h76v1h-76zM263,411h77v1h-77zM144,412h74v1h-74zM264,412h75v1h-75zM145,413h73v1h-73zM265,413h73v1h-73zM147,414h72v1h-72zM266,414h71v1h-71zM149,415h70v1h-70zM267,415h69v1h-69zM151,416h68v1h-68zM268,416h67v1h-67zM153,417h66v1h-66zM269,417h65v1h-65zM155,418h64v1h-64zM270,418h63v1h-63zM158,419h61v1h-61zM271,419h61v1h-61zM160,420h59v1h-59zM272,420h59v1h-59zM163,421h55v1h-55zM273,421h57v1h-57zM165,422h53v1h-53zM274,422h55v1h-55zM168,423h50v1h-50zM276,423h51v1h-51zM169,424h48v1h-48zM277,424h49v1h-49zM168,425h48v1h-48zM279,425h46v1h-46zM167,426h48v1h-48zM281,426h42v1h-42zM166,427h49v1h-49zM283,427h39v1h-39zM166,428h47v1h-47zM285,428h35v1h-35zM165,429h47v1h-47zM287,429h30v1h-30zM164,430h47v1h-47zM290,430h24v1h-24zM164,431h46v1h-46zM295,431h14v1h-14zM164,432h44v1h-44zM164,433h43v1h-43zM163,434h43v1h-43zM163,435h41v1h-41zM163,436h40v1h-40zM163,437h38v1h-38zM164,438h36v1h-36zM164,439h34v1h-34zM164,440h33v1h-33zM165,441h30v1h-30zM165,442h29v1h-29zM166,443h26v1h-26zM167,444h24v1h-24zM167,445h22v1h-22zM169,446h18v1h-18zM170,447h16v1h-16zM171,448h13v1h-13zM174,449h8v1h-8z" fill="#000"/>
+    </svg>
+  </button>
+
+  <div id="settingsBtn" class="settings-hidden">
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" aria-hidden="true" viewBox="0 0 512 512">
+      <path fill="#ffbc0d" d="M233,0h46v1h-46zM228,1h56v1h-56zM225,2h62v1h-62zM222,3h68v1h-68zM220,4h72v1h-72zM218,5h76v1h-76zM216,6h80v1h-80zM215,7h83v1h-83zM213,8h86v1h-86zM212,9h88v1h-88zM210,10h92v1h-92zM209,11h94v1h-94zM208,12h96v1h-96zM207,13h98v1h-98zM206,14h100v1h-100zM205,15h102v1h-102zM204,16h104v1h-104zM203,17h106v1h-106zM203,18h106v1h-106zM202,19h108v1h-108zM201,20h110v1h-110zM200,21h112v1h-112zM200,22h112v1h-112zM199,23h114v1h-114zM199,24h114v1h-114zM198,25h116v1h-116zM198,26h116v1h-116zM197,27h118v1h-118zM197,28h118v1h-118zM196,29h120v1h-120zM196,30h40v1h-40zM276,30h40v1h-40zM196,31h37v1h-37zM279,31h37v1h-37zM195,32h36v1h-36zM281,32h36v1h-36zM195,33h35v1h-35zM282,33h35v1h-35zM195,34h33v1h-33zM284,34h33v1h-33zM194,35h33v1h-33zM285,35h33v1h-33zM194,36h33v1h-33zM285,36h33v1h-33zM194,37h32v1h-32zM286,37h32v1h-32zM194,38h31v1h-31zM287,38h31v1h-31zM193,39h32v1h-32zM287,39h32v1h-32zM193,40h31v1h-31zM288,40h31v1h-31zM193,41h31v1h-31zM288,41h31v1h-31zM193,42h30v1h-30zM289,42h30v1h-30zM193,43h30v1h-30zM289,43h30v1h-30zM193,44h30v1h-30zM289,44h30v1h-30zM193,45h30v1h-30zM289,45h30v1h-30zM193,46h30v1h-30zM289,46h30v1h-30zM193,47h30v1h-30zM289,47h30v1h-30zM193,48h30v1h-30zM289,48h30v1h-30zM193,49h30v1h-30zM289,49h30v1h-30zM112,50h16v1h-16zM193,50h30v1h-30zM289,50h30v1h-30zM384,50h16v1h-16zM107,51h25v1h-25zM193,51h30v1h-30zM289,51h30v1h-30zM380,51h25v1h-25zM104,52h31v1h-31zM193,52h30v1h-30zM289,52h30v1h-30zM377,52h31v1h-31zM101,53h37v1h-37zM193,53h30v1h-30zM289,53h30v1h-30zM374,53h37v1h-37zM99,54h41v1h-41zM193,54h30v1h-30zM289,54h30v1h-30zM372,54h41v1h-41zM97,55h45v1h-45zM193,55h30v1h-30zM289,55h30v1h-30zM370,55h45v1h-45zM96,56h48v1h-48zM193,56h30v1h-30zM289,56h30v1h-30zM368,56h49v1h-49zM94,57h51v1h-51zM193,57h30v1h-30zM289,57h30v1h-30zM367,57h51v1h-51zM92,58h55v1h-55zM191,58h32v1h-32zM289,58h32v1h-32zM365,58h55v1h-55zM91,59h57v1h-57zM188,59h35v1h-35zM289,59h35v1h-35zM364,59h57v1h-57zM90,60h60v1h-60zM186,60h37v1h-37zM289,60h37v1h-37zM362,60h60v1h-60zM89,61h62v1h-62zM183,61h40v1h-40zM289,61h40v1h-40zM361,61h62v1h-62zM88,62h64v1h-64zM180,62h43v1h-43zM289,62h43v1h-43zM360,62h64v1h-64zM86,63h67v1h-67zM178,63h45v1h-45zM289,63h45v1h-45zM359,63h67v1h-67zM85,64h69v1h-69zM175,64h48v1h-48zM289,64h48v1h-48zM358,64h69v1h-69zM84,65h71v1h-71zM173,65h50v1h-50zM289,65h50v1h-50zM357,65h71v1h-71zM83,66h73v1h-73zM171,66h52v1h-52zM289,66h52v1h-52zM356,66h73v1h-73zM82,67h75v1h-75zM168,67h55v1h-55zM289,67h55v1h-55zM355,67h75v1h-75zM81,68h77v1h-77zM166,68h57v1h-57zM289,68h57v1h-57zM354,68h77v1h-77zM80,69h79v1h-79zM164,69h59v1h-59zM289,69h59v1h-59zM353,69h79v1h-79zM79,70h81v1h-81zM162,70h61v1h-61zM289,70h61v1h-61zM352,70h81v1h-81zM78,71h145v1h-145zM289,71h145v1h-145zM77,72h145v1h-145zM290,72h145v1h-145zM76,73h146v1h-146zM290,73h146v1h-146zM75,74h147v1h-147zM290,74h147v1h-147zM74,75h147v1h-147zM291,75h147v1h-147zM73,76h148v1h-148zM291,76h148v1h-148zM72,77h148v1h-148zM292,77h148v1h-148zM71,78h149v1h-149zM292,78h149v1h-149zM70,79h149v1h-149zM293,79h149v1h-149zM69,80h46v1h-46zM124,80h94v1h-94zM294,80h94v1h-94zM397,80h46v1h-46zM68,81h44v1h-44zM127,81h89v1h-89zM296,81h89v1h-89zM400,81h44v1h-44zM67,82h43v1h-43zM129,82h86v1h-86zM297,82h86v1h-86zM402,82h43v1h-43zM66,83h43v1h-43zM130,83h82v1h-82zM300,83h82v1h-82zM403,83h43v1h-43zM65,84h43v1h-43zM131,84h78v1h-78zM303,84h78v1h-78zM404,84h43v1h-43zM64,85h43v1h-43zM132,85h73v1h-73zM307,85h73v1h-73zM405,85h43v1h-43zM63,86h43v1h-43zM133,86h69v1h-69zM310,86h69v1h-69zM406,86h43v1h-43zM63,87h42v1h-42zM134,87h65v1h-65zM313,87h65v1h-65zM407,87h42v1h-42zM62,88h42v1h-42zM135,88h61v1h-61zM316,88h61v1h-61zM408,88h42v1h-42zM61,89h42v1h-42zM136,89h58v1h-58zM318,89h58v1h-58zM409,89h42v1h-42zM60,90h42v1h-42zM137,90h54v1h-54zM321,90h54v1h-54zM410,90h42v1h-42zM59,91h42v1h-42zM138,91h50v1h-50zM324,91h50v1h-50zM411,91h42v1h-42zM58,92h42v1h-42zM139,92h47v1h-47zM326,92h47v1h-47zM412,92h42v1h-42zM58,93h41v1h-41zM140,93h44v1h-44zM328,93h44v1h-44zM413,93h41v1h-41zM57,94h41v1h-41zM141,94h41v1h-41zM330,94h41v1h-41zM414,94h41v1h-41zM57,95h40v1h-40zM142,95h38v1h-38zM333,95h37v1h-37zM415,95h40v1h-40zM56,96h40v1h-40zM143,96h34v1h-34zM335,96h34v1h-34zM416,96h40v1h-40zM55,97h40v1h-40zM144,97h31v1h-31zM337,97h31v1h-31zM417,97h40v1h-40zM55,98h39v1h-39zM145,98h29v1h-29zM339,98h28v1h-28zM418,98h39v1h-39zM54,99h39v1h-39zM146,99h26v1h-26zM340,99h26v1h-26zM419,99h39v1h-39zM54,100h38v1h-38zM147,100h23v1h-23zM342,100h23v1h-23zM420,100h38v1h-38zM53,101h38v1h-38zM149,101h19v1h-19zM344,101h19v1h-19zM421,101h38v1h-38zM53,102h37v1h-37zM150,102h16v1h-16zM346,102h16v1h-16zM422,102h37v1h-37zM53,103h36v1h-36zM152,103h12v1h-12zM348,103h12v1h-12zM423,103h36v1h-36zM52,104h36v1h-36zM155,104h6v1h-6zM351,104h6v1h-6zM424,104h36v1h-36zM52,105h35v1h-35zM425,105h35v1h-35zM52,106h34v1h-34zM426,106h34v1h-34zM51,107h34v1h-34zM427,107h34v1h-34zM51,108h33v1h-33zM428,108h33v1h-33zM51,109h32v1h-32zM429,109h32v1h-32zM51,110h31v1h-31zM430,110h31v1h-31zM51,111h31v1h-31zM430,111h31v1h-31zM50,112h31v1h-31zM431,112h31v1h-31zM50,113h31v1h-31zM431,113h31v1h-31zM50,114h31v1h-31zM431,114h31v1h-31zM50,115h30v1h-30zM432,115h30v1h-30zM50,116h30v1h-30zM432,116h30v1h-30zM50,117h30v1h-30zM432,117h30v1h-30zM50,118h30v1h-30zM432,118h30v1h-30zM50,119h30v1h-30zM432,119h30v1h-30zM50,120h30v1h-30zM432,120h30v1h-30zM50,121h30v1h-30zM432,121h30v1h-30zM50,122h30v1h-30zM432,122h30v1h-30zM50,123h30v1h-30zM432,123h30v1h-30zM50,124h31v1h-31zM431,124h31v1h-31zM50,125h31v1h-31zM431,125h31v1h-31zM50,126h31v1h-31zM431,126h31v1h-31zM50,127h32v1h-32zM430,127h31v1h-31zM51,128h31v1h-31zM430,128h31v1h-31zM51,129h32v1h-32zM429,129h32v1h-32zM51,130h33v1h-33zM428,130h33v1h-33zM51,131h34v1h-34zM427,131h34v1h-34zM52,132h34v1h-34zM426,132h34v1h-34zM52,133h35v1h-35zM425,133h35v1h-35zM52,134h36v1h-36zM424,134h36v1h-36zM53,135h36v1h-36zM423,135h36v1h-36zM53,136h37v1h-37zM422,136h37v1h-37zM53,137h38v1h-38zM421,137h38v1h-38zM54,138h38v1h-38zM420,138h38v1h-38zM54,139h39v1h-39zM419,139h39v1h-39zM55,140h39v1h-39zM418,140h39v1h-39zM55,141h40v1h-40zM417,141h40v1h-40zM56,142h40v1h-40zM416,142h40v1h-40zM56,143h41v1h-41zM415,143h41v1h-41zM57,144h41v1h-41zM414,144h41v1h-41zM58,145h41v1h-41zM242,145h28v1h-28zM413,145h41v1h-41zM58,146h42v1h-42zM236,146h40v1h-40zM412,146h42v1h-42zM59,147h42v1h-42zM231,147h50v1h-50zM411,147h42v1h-42zM60,148h41v1h-41zM227,148h58v1h-58zM411,148h41v1h-41zM60,149h42v1h-42zM223,149h66v1h-66zM410,149h42v1h-42zM61,150h42v1h-42zM220,150h72v1h-72zM409,150h42v1h-42zM62,151h41v1h-41zM217,151h78v1h-78zM409,151h41v1h-41zM63,152h41v1h-41zM215,152h82v1h-82zM408,152h41v1h-41zM64,153h40v1h-40zM212,153h88v1h-88zM408,153h40v1h-40zM65,154h39v1h-39zM210,154h92v1h-92zM408,154h39v1h-39zM66,155h39v1h-39zM208,155h96v1h-96zM407,155h39v1h-39zM67,156h38v1h-38zM206,156h100v1h-100zM407,156h38v1h-38zM68,157h37v1h-37zM204,157h104v1h-104zM407,157h37v1h-37zM69,158h36v1h-36zM202,158h108v1h-108zM407,158h36v1h-36zM70,159h35v1h-35zM200,159h112v1h-112zM407,159h35v1h-35zM71,160h34v1h-34zM199,160h114v1h-114zM407,160h34v1h-34zM71,161h33v1h-33zM197,161h118v1h-118zM408,161h33v1h-33zM70,162h34v1h-34zM196,162h121v1h-121zM408,162h34v1h-34zM70,163h34v1h-34zM194,163h124v1h-124zM408,163h34v1h-34zM69,164h34v1h-34zM193,164h127v1h-127zM409,164h34v1h-34zM69,165h34v1h-34zM191,165h130v1h-130zM409,165h34v1h-34zM68,166h34v1h-34zM190,166h132v1h-132zM410,166h34v1h-34zM68,167h34v1h-34zM188,167h136v1h-136zM410,167h34v1h-34zM67,168h34v1h-34zM187,168h138v1h-138zM411,168h33v1h-33zM67,169h34v1h-34zM186,169h140v1h-140zM411,169h34v1h-34zM67,170h33v1h-33zM185,170h142v1h-142zM412,170h33v1h-33zM66,171h34v1h-34zM184,171h145v1h-145zM412,171h34v1h-34zM66,172h33v1h-33zM182,172h148v1h-148zM413,172h33v1h-33zM65,173h34v1h-34zM181,173h150v1h-150zM413,173h34v1h-34zM65,174h33v1h-33zM180,174h152v1h-152zM414,174h33v1h-33zM64,175h33v1h-33zM179,175h65v1h-65zM268,175h65v1h-65zM415,175h33v1h-33zM64,176h33v1h-33zM178,176h61v1h-61zM273,176h61v1h-61zM415,176h33v1h-33zM64,177h32v1h-32zM177,177h57v1h-57zM277,177h58v1h-58zM416,177h32v1h-32zM63,178h33v1h-33zM176,178h55v1h-55zM281,178h55v1h-55zM416,178h33v1h-33zM63,179h32v1h-32zM175,179h53v1h-53zM284,179h53v1h-53zM416,179h33v1h-33zM62,180h33v1h-33zM174,180h52v1h-52zM286,180h52v1h-52zM417,180h33v1h-33zM62,181h33v1h-33zM173,181h50v1h-50zM289,181h50v1h-50zM417,181h33v1h-33zM62,182h32v1h-32zM172,182h49v1h-49zM291,182h49v1h-49zM418,182h32v1h-32zM61,183h33v1h-33zM172,183h47v1h-47zM293,183h47v1h-47zM418,183h33v1h-33zM61,184h32v1h-32zM171,184h46v1h-46zM295,184h46v1h-46zM419,184h32v1h-32zM60,185h33v1h-33zM170,185h45v1h-45zM297,185h45v1h-45zM419,185h32v1h-32zM60,186h32v1h-32zM169,186h45v1h-45zM298,186h45v1h-45zM420,186h32v1h-32zM60,187h32v1h-32zM168,187h44v1h-44zM300,187h44v1h-44zM420,187h32v1h-32zM59,188h32v1h-32zM167,188h44v1h-44zM301,188h44v1h-44zM421,188h32v1h-32zM59,189h32v1h-32zM167,189h42v1h-42zM303,189h42v1h-42zM421,189h32v1h-32zM59,190h32v1h-32zM166,190h42v1h-42zM304,190h42v1h-42zM421,190h32v1h-32zM58,191h32v1h-32zM165,191h41v1h-41zM306,191h41v1h-41zM422,191h32v1h-32zM58,192h32v1h-32zM165,192h40v1h-40zM307,192h40v1h-40zM422,192h32v1h-32zM39,193h51v1h-51zM164,193h40v1h-40zM308,193h40v1h-40zM422,193h51v1h-51zM35,194h54v1h-54zM163,194h40v1h-40zM309,194h40v1h-40zM423,194h54v1h-54zM32,195h57v1h-57zM163,195h39v1h-39zM310,195h39v1h-39zM423,195h58v1h-58zM29,196h59v1h-59zM162,196h39v1h-39zM311,196h39v1h-39zM424,196h59v1h-59zM27,197h61v1h-61zM161,197h38v1h-38zM313,197h38v1h-38zM424,197h61v1h-61zM25,198h63v1h-63zM161,198h37v1h-37zM314,198h37v1h-37zM424,198h63v1h-63zM23,199h64v1h-64zM160,199h37v1h-37zM315,199h37v1h-37zM425,199h64v1h-64zM21,200h66v1h-66zM159,200h38v1h-38zM315,200h38v1h-38zM425,200h66v1h-66zM20,201h67v1h-67zM159,201h37v1h-37zM316,201h37v1h-37zM425,201h67v1h-67zM19,202h67v1h-67zM158,202h37v1h-37zM317,202h37v1h-37zM426,202h67v1h-67zM17,203h69v1h-69zM158,203h36v1h-36zM318,203h36v1h-36zM426,203h69v1h-69zM16,204h70v1h-70zM157,204h36v1h-36zM319,204h36v1h-36zM426,204h70v1h-70zM15,205h70v1h-70zM157,205h35v1h-35zM320,205h35v1h-35zM427,205h70v1h-70zM14,206h71v1h-71zM156,206h35v1h-35zM321,206h35v1h-35zM427,206h71v1h-71zM13,207h72v1h-72zM156,207h35v1h-35zM321,207h35v1h-35zM427,207h72v1h-72zM12,208h73v1h-73zM155,208h35v1h-35zM322,208h35v1h-35zM427,208h73v1h-73zM11,209h73v1h-73zM155,209h34v1h-34zM323,209h34v1h-34zM428,209h73v1h-73zM10,210h74v1h-74zM154,210h35v1h-35zM323,210h35v1h-35zM428,210h74v1h-74zM10,211h74v1h-74zM154,211h34v1h-34zM324,211h34v1h-34zM428,211h74v1h-74zM9,212h74v1h-74zM153,212h34v1h-34zM325,212h34v1h-34zM429,212h74v1h-74zM8,213h75v1h-75zM153,213h34v1h-34zM325,213h34v1h-34zM429,213h75v1h-75zM7,214h76v1h-76zM153,214h33v1h-33zM326,214h33v1h-33zM429,214h75v1h-75zM7,215h75v1h-75zM152,215h33v1h-33zM327,215h33v1h-33zM430,215h75v1h-75zM6,216h75v1h-75zM152,216h33v1h-33zM327,216h33v1h-33zM431,216h75v1h-75zM6,217h75v1h-75zM151,217h33v1h-33zM328,217h33v1h-33zM431,217h75v1h-75zM5,218h75v1h-75zM151,218h33v1h-33zM328,218h33v1h-33zM432,218h75v1h-75zM5,219h74v1h-74zM151,219h32v1h-32zM329,219h32v1h-32zM433,219h74v1h-74zM4,220h73v1h-73zM150,220h33v1h-33zM329,220h33v1h-33zM435,220h73v1h-73zM4,221h71v1h-71zM150,221h32v1h-32zM330,221h32v1h-32zM437,221h71v1h-71zM3,222h69v1h-69zM150,222h32v1h-32zM330,222h32v1h-32zM440,222h69v1h-69zM3,223h39v1h-39zM149,223h32v1h-32zM331,223h32v1h-32zM470,223h39v1h-39zM3,224h37v1h-37zM149,224h32v1h-32zM331,224h32v1h-32zM472,224h37v1h-37zM2,225h36v1h-36zM149,225h32v1h-32zM331,225h32v1h-32zM474,225h36v1h-36zM2,226h35v1h-35zM149,226h31v1h-31zM332,226h31v1h-31zM475,226h35v1h-35zM2,227h33v1h-33zM148,227h32v1h-32zM332,227h32v1h-32zM477,227h33v1h-33zM1,228h33v1h-33zM148,228h31v1h-31zM333,228h31v1h-31zM478,228h33v1h-33zM1,229h33v1h-33zM148,229h31v1h-31zM333,229h31v1h-31zM478,229h33v1h-33zM1,230h32v1h-32zM148,230h31v1h-31zM333,230h31v1h-31zM479,230h32v1h-32zM1,231h31v1h-31zM147,231h31v1h-31zM334,231h31v1h-31zM480,231h31v1h-31zM1,232h31v1h-31zM147,232h31v1h-31zM334,232h31v1h-31zM480,232h31v1h-31zM0,233h31v1h-31zM147,233h31v1h-31zM334,233h31v1h-31zM481,233h31v1h-31zM0,234h31v1h-31zM147,234h30v1h-30zM334,234h31v1h-31zM481,234h31v1h-31zM0,235h31v1h-31zM147,235h30v1h-30zM335,235h30v1h-30zM481,235h31v1h-31zM0,236h30v1h-30zM146,236h31v1h-31zM335,236h31v1h-31zM482,236h30v1h-30zM0,237h30v1h-30zM146,237h31v1h-31zM335,237h31v1h-31zM482,237h30v1h-30zM0,238h30v1h-30zM146,238h31v1h-31zM335,238h31v1h-31zM482,238h30v1h-30zM0,239h30v1h-30zM146,239h30v1h-30zM336,239h30v1h-30zM482,239h30v1h-30zM0,240h30v1h-30zM146,240h30v1h-30zM336,240h30v1h-30zM482,240h30v1h-30zM0,241h30v1h-30zM146,241h30v1h-30zM336,241h30v1h-30zM482,241h30v1h-30zM0,242h30v1h-30zM145,242h31v1h-31zM336,242h31v1h-31zM482,242h30v1h-30zM0,243h30v1h-30zM145,243h31v1h-31zM336,243h31v1h-31zM482,243h30v1h-30zM0,244h30v1h-30zM145,244h30v1h-30zM337,244h30v1h-30zM482,244h30v1h-30zM0,245h30v1h-30zM145,245h30v1h-30zM337,245h30v1h-30zM482,245h30v1h-30zM0,246h30v1h-30zM145,246h30v1h-30zM337,246h30v1h-30zM482,246h30v1h-30zM0,247h30v1h-30zM145,247h30v1h-30zM337,247h30v1h-30zM482,247h30v1h-30zM0,248h30v1h-30zM145,248h30v1h-30zM337,248h30v1h-30zM482,248h30v1h-30zM0,249h30v1h-30zM145,249h30v1h-30zM337,249h30v1h-30zM482,249h30v1h-30zM0,250h30v1h-30zM145,250h30v1h-30zM337,250h30v1h-30zM482,250h30v1h-30zM0,251h30v1h-30zM145,251h30v1h-30zM337,251h30v1h-30zM482,251h30v1h-30zM0,252h30v1h-30zM145,252h30v1h-30zM337,252h30v1h-30zM482,252h30v1h-30zM0,253h30v1h-30zM145,253h30v1h-30zM337,253h30v1h-30zM482,253h30v1h-30zM0,254h30v1h-30zM145,254h30v1h-30zM337,254h30v1h-30zM482,254h30v1h-30zM0,255h30v1h-30zM145,255h30v1h-30zM337,255h30v1h-30zM482,255h30v1h-30zM0,256h30v1h-30zM145,256h30v1h-30zM337,256h30v1h-30zM482,256h30v1h-30zM0,257h30v1h-30zM145,257h30v1h-30zM337,257h30v1h-30zM482,257h30v1h-30zM0,258h30v1h-30zM145,258h30v1h-30zM337,258h30v1h-30zM482,258h30v1h-30zM0,259h30v1h-30zM145,259h30v1h-30zM337,259h30v1h-30zM482,259h30v1h-30zM0,260h30v1h-30zM145,260h30v1h-30zM337,260h30v1h-30zM482,260h30v1h-30zM0,261h30v1h-30zM145,261h30v1h-30zM337,261h30v1h-30zM482,261h30v1h-30zM0,262h30v1h-30zM145,262h30v1h-30zM337,262h30v1h-30zM482,262h30v1h-30zM0,263h30v1h-30zM145,263h30v1h-30zM337,263h30v1h-30zM482,263h30v1h-30zM0,264h30v1h-30zM145,264h30v1h-30zM337,264h30v1h-30zM482,264h30v1h-30zM0,265h30v1h-30zM145,265h30v1h-30zM337,265h30v1h-30zM482,265h30v1h-30zM0,266h30v1h-30zM145,266h30v1h-30zM337,266h30v1h-30zM482,266h30v1h-30zM0,267h30v1h-30zM145,267h30v1h-30zM337,267h30v1h-30zM482,267h30v1h-30zM0,268h30v1h-30zM145,268h31v1h-31zM336,268h31v1h-31zM482,268h30v1h-30zM0,269h30v1h-30zM145,269h31v1h-31zM336,269h31v1h-31zM482,269h30v1h-30zM0,270h30v1h-30zM146,270h30v1h-30zM336,270h30v1h-30zM482,270h30v1h-30zM0,271h30v1h-30zM146,271h30v1h-30zM336,271h30v1h-30zM482,271h30v1h-30zM0,272h30v1h-30zM146,272h30v1h-30zM336,272h30v1h-30zM482,272h30v1h-30zM0,273h30v1h-30zM146,273h31v1h-31zM335,273h31v1h-31zM482,273h30v1h-30zM0,274h30v1h-30zM146,274h31v1h-31zM335,274h31v1h-31zM482,274h30v1h-30zM0,275h30v1h-30zM146,275h31v1h-31zM335,275h31v1h-31zM482,275h30v1h-30zM0,276h31v1h-31zM147,276h30v1h-30zM335,276h30v1h-30zM481,276h31v1h-31zM0,277h31v1h-31zM147,277h30v1h-30zM334,277h31v1h-31zM481,277h31v1h-31zM0,278h31v1h-31zM147,278h31v1h-31zM334,278h31v1h-31zM481,278h31v1h-31zM1,279h31v1h-31zM147,279h31v1h-31zM334,279h31v1h-31zM480,279h31v1h-31zM1,280h31v1h-31zM147,280h31v1h-31zM334,280h31v1h-31zM480,280h31v1h-31zM1,281h32v1h-32zM148,281h31v1h-31zM333,281h31v1h-31zM479,281h32v1h-32zM1,282h33v1h-33zM148,282h31v1h-31zM333,282h31v1h-31zM478,282h33v1h-33zM1,283h33v1h-33zM148,283h31v1h-31zM333,283h31v1h-31zM478,283h33v1h-33zM2,284h33v1h-33zM148,284h32v1h-32zM332,284h32v1h-32zM477,284h33v1h-33zM2,285h35v1h-35zM149,285h31v1h-31zM332,285h31v1h-31zM475,285h35v1h-35zM2,286h36v1h-36zM149,286h32v1h-32zM331,286h32v1h-32zM474,286h36v1h-36zM3,287h37v1h-37zM149,287h32v1h-32zM331,287h32v1h-32zM472,287h37v1h-37zM3,288h39v1h-39zM149,288h32v1h-32zM331,288h32v1h-32zM470,288h39v1h-39zM3,289h69v1h-69zM150,289h32v1h-32zM330,289h32v1h-32zM440,289h69v1h-69zM4,290h71v1h-71zM150,290h32v1h-32zM330,290h32v1h-32zM437,290h71v1h-71zM4,291h73v1h-73zM150,291h33v1h-33zM329,291h33v1h-33zM435,291h73v1h-73zM5,292h74v1h-74zM151,292h32v1h-32zM329,292h32v1h-32zM433,292h74v1h-74zM5,293h75v1h-75zM151,293h33v1h-33zM328,293h33v1h-33zM432,293h75v1h-75zM6,294h75v1h-75zM151,294h33v1h-33zM328,294h33v1h-33zM431,294h75v1h-75zM6,295h75v1h-75zM152,295h33v1h-33zM327,295h33v1h-33zM431,295h75v1h-75zM7,296h75v1h-75zM152,296h33v1h-33zM327,296h33v1h-33zM430,296h75v1h-75zM8,297h75v1h-75zM153,297h33v1h-33zM326,297h33v1h-33zM429,297h75v1h-75zM8,298h75v1h-75zM153,298h34v1h-34zM325,298h34v1h-34zM429,298h75v1h-75zM9,299h74v1h-74zM153,299h34v1h-34zM325,299h34v1h-34zM429,299h74v1h-74zM10,300h74v1h-74zM154,300h34v1h-34zM324,300h34v1h-34zM428,300h74v1h-74zM10,301h74v1h-74zM154,301h35v1h-35zM323,301h35v1h-35zM428,301h74v1h-74zM11,302h73v1h-73zM155,302h34v1h-34zM323,302h34v1h-34zM428,302h73v1h-73zM12,303h73v1h-73zM155,303h35v1h-35zM322,303h35v1h-35zM427,303h73v1h-73zM13,304h72v1h-72zM156,304h35v1h-35zM321,304h35v1h-35zM427,304h72v1h-72zM14,305h71v1h-71zM156,305h35v1h-35zM321,305h35v1h-35zM427,305h71v1h-71zM15,306h70v1h-70zM157,306h35v1h-35zM320,306h35v1h-35zM427,306h70v1h-70zM16,307h70v1h-70zM157,307h36v1h-36zM319,307h36v1h-36zM426,307h70v1h-70zM17,308h69v1h-69zM158,308h36v1h-36zM318,308h36v1h-36zM426,308h69v1h-69zM19,309h67v1h-67zM158,309h37v1h-37zM317,309h37v1h-37zM426,309h67v1h-67zM20,310h67v1h-67zM159,310h37v1h-37zM316,310h37v1h-37zM425,310h67v1h-67zM21,311h66v1h-66zM159,311h38v1h-38zM315,311h38v1h-38zM425,311h66v1h-66zM23,312h64v1h-64zM160,312h37v1h-37zM315,312h37v1h-37zM425,312h64v1h-64zM25,313h63v1h-63zM161,313h37v1h-37zM314,313h37v1h-37zM424,313h63v1h-63zM27,314h61v1h-61zM161,314h39v1h-39zM313,314h38v1h-38zM424,314h61v1h-61zM29,315h59v1h-59zM162,315h39v1h-39zM311,315h39v1h-39zM424,315h59v1h-59zM32,316h57v1h-57zM163,316h39v1h-39zM310,316h39v1h-39zM423,316h58v1h-58zM35,317h54v1h-54zM163,317h40v1h-40zM309,317h40v1h-40zM423,317h54v1h-54zM39,318h51v1h-51zM164,318h40v1h-40zM308,318h40v1h-40zM422,318h51v1h-51zM58,319h32v1h-32zM165,319h40v1h-40zM307,319h40v1h-40zM422,319h32v1h-32zM58,320h32v1h-32zM165,320h41v1h-41zM306,320h41v1h-41zM422,320h32v1h-32zM59,321h32v1h-32zM166,321h42v1h-42zM304,321h42v1h-42zM421,321h32v1h-32zM59,322h32v1h-32zM167,322h42v1h-42zM303,322h42v1h-42zM421,322h32v1h-32zM59,323h32v1h-32zM167,323h44v1h-44zM301,323h44v1h-44zM421,323h32v1h-32zM60,324h32v1h-32zM168,324h44v1h-44zM300,324h44v1h-44zM420,324h32v1h-32zM60,325h32v1h-32zM169,325h45v1h-45zM298,325h45v1h-45zM420,325h32v1h-32zM61,326h32v1h-32zM170,326h45v1h-45zM297,326h45v1h-45zM419,326h32v1h-32zM61,327h32v1h-32zM171,327h46v1h-46zM295,327h46v1h-46zM419,327h32v1h-32zM61,328h33v1h-33zM172,328h47v1h-47zM293,328h47v1h-47zM418,328h33v1h-33zM62,329h32v1h-32zM172,329h49v1h-49zM291,329h49v1h-49zM418,329h32v1h-32zM62,330h33v1h-33zM173,330h50v1h-50zM289,330h50v1h-50zM417,330h33v1h-33zM62,331h33v1h-33zM174,331h52v1h-52zM286,331h52v1h-52zM417,331h33v1h-33zM63,332h33v1h-33zM175,332h53v1h-53zM284,332h53v1h-53zM416,332h33v1h-33zM63,333h33v1h-33zM176,333h55v1h-55zM281,333h55v1h-55zM416,333h33v1h-33zM64,334h32v1h-32zM177,334h58v1h-58zM277,334h58v1h-58zM416,334h32v1h-32zM64,335h33v1h-33zM178,335h61v1h-61zM273,335h61v1h-61zM415,335h33v1h-33zM64,336h33v1h-33zM179,336h65v1h-65zM268,336h65v1h-65zM415,336h33v1h-33zM65,337h33v1h-33zM180,337h152v1h-152zM414,337h33v1h-33zM65,338h34v1h-34zM181,338h150v1h-150zM413,338h34v1h-34zM66,339h33v1h-33zM182,339h148v1h-148zM413,339h33v1h-33zM66,340h34v1h-34zM184,340h145v1h-145zM412,340h34v1h-34zM67,341h33v1h-33zM185,341h142v1h-142zM412,341h33v1h-33zM67,342h34v1h-34zM186,342h140v1h-140zM411,342h34v1h-34zM67,343h34v1h-34zM187,343h138v1h-138zM411,343h33v1h-33zM68,344h34v1h-34zM188,344h136v1h-136zM410,344h34v1h-34zM68,345h34v1h-34zM190,345h132v1h-132zM410,345h34v1h-34zM69,346h34v1h-34zM191,346h130v1h-130zM409,346h34v1h-34zM69,347h34v1h-34zM193,347h126v1h-126zM409,347h34v1h-34zM70,348h34v1h-34zM194,348h124v1h-124zM408,348h34v1h-34zM70,349h34v1h-34zM196,349h120v1h-120zM408,349h34v1h-34zM71,350h33v1h-33zM197,350h118v1h-118zM408,350h33v1h-33zM71,351h34v1h-34zM199,351h114v1h-114zM407,351h34v1h-34zM70,352h35v1h-35zM200,352h112v1h-112zM407,352h35v1h-35zM69,353h36v1h-36zM202,353h108v1h-108zM407,353h36v1h-36zM68,354h37v1h-37zM204,354h104v1h-104zM407,354h37v1h-37zM67,355h38v1h-38zM206,355h100v1h-100zM407,355h38v1h-38zM66,356h39v1h-39zM208,356h96v1h-96zM407,356h39v1h-39zM65,357h39v1h-39zM210,357h92v1h-92zM408,357h39v1h-39zM64,358h40v1h-40zM212,358h88v1h-88zM408,358h40v1h-40zM63,359h41v1h-41zM215,359h82v1h-82zM408,359h41v1h-41zM62,360h41v1h-41zM217,360h78v1h-78zM409,360h41v1h-41zM61,361h42v1h-42zM220,361h72v1h-72zM409,361h42v1h-42zM60,362h42v1h-42zM223,362h66v1h-66zM410,362h42v1h-42zM60,363h41v1h-41zM227,363h58v1h-58zM411,363h41v1h-41zM59,364h42v1h-42zM231,364h50v1h-50zM411,364h42v1h-42zM58,365h42v1h-42zM236,365h40v1h-40zM412,365h42v1h-42zM58,366h41v1h-41zM242,366h28v1h-28zM413,366h41v1h-41zM57,367h41v1h-41zM414,367h41v1h-41zM56,368h41v1h-41zM415,368h41v1h-41zM56,369h40v1h-40zM416,369h40v1h-40zM55,370h40v1h-40zM417,370h40v1h-40zM55,371h39v1h-39zM418,371h39v1h-39zM54,372h39v1h-39zM419,372h39v1h-39zM54,373h38v1h-38zM420,373h38v1h-38zM53,374h38v1h-38zM421,374h38v1h-38zM53,375h37v1h-37zM422,375h37v1h-37zM53,376h36v1h-36zM423,376h36v1h-36zM52,377h36v1h-36zM424,377h36v1h-36zM52,378h35v1h-35zM425,378h35v1h-35zM52,379h34v1h-34zM426,379h34v1h-34zM51,380h34v1h-34zM427,380h34v1h-34zM51,381h33v1h-33zM428,381h33v1h-33zM51,382h32v1h-32zM429,382h32v1h-32zM51,383h31v1h-31zM430,383h31v1h-31zM50,384h32v1h-32zM430,384h31v1h-31zM50,385h31v1h-31zM431,385h31v1h-31zM50,386h31v1h-31zM431,386h31v1h-31zM50,387h31v1h-31zM431,387h31v1h-31zM50,388h30v1h-30zM432,388h30v1h-30zM50,389h30v1h-30zM432,389h30v1h-30zM50,390h30v1h-30zM432,390h30v1h-30zM50,391h30v1h-30zM432,391h30v1h-30zM50,392h30v1h-30zM432,392h30v1h-30zM50,393h30v1h-30zM432,393h30v1h-30zM50,394h30v1h-30zM432,394h30v1h-30zM50,395h30v1h-30zM432,395h30v1h-30zM50,396h30v1h-30zM432,396h30v1h-30zM50,397h31v1h-31zM431,397h31v1h-31zM50,398h31v1h-31zM431,398h31v1h-31zM50,399h31v1h-31zM431,399h31v1h-31zM51,400h31v1h-31zM430,400h31v1h-31zM51,401h31v1h-31zM429,401h32v1h-32zM51,402h32v1h-32zM429,402h32v1h-32zM51,403h33v1h-33zM428,403h33v1h-33zM51,404h34v1h-34zM427,404h34v1h-34zM52,405h34v1h-34zM426,405h34v1h-34zM52,406h35v1h-35zM425,406h35v1h-35zM52,407h36v1h-36zM155,407h6v1h-6zM350,407h7v1h-7zM424,407h36v1h-36zM53,408h36v1h-36zM152,408h12v1h-12zM348,408h12v1h-12zM423,408h36v1h-36zM53,409h37v1h-37zM150,409h16v1h-16zM346,409h16v1h-16zM422,409h37v1h-37zM53,410h38v1h-38zM149,410h19v1h-19zM344,410h19v1h-19zM421,410h38v1h-38zM54,411h38v1h-38zM147,411h23v1h-23zM342,411h23v1h-23zM420,411h38v1h-38zM54,412h39v1h-39zM146,412h26v1h-26zM340,412h26v1h-26zM419,412h39v1h-39zM55,413h39v1h-39zM145,413h29v1h-29zM339,413h28v1h-28zM418,413h39v1h-39zM55,414h40v1h-40zM144,414h31v1h-31zM337,414h31v1h-31zM417,414h40v1h-40zM56,415h40v1h-40zM143,415h34v1h-34zM335,415h34v1h-34zM416,415h40v1h-40zM57,416h40v1h-40zM142,416h38v1h-38zM332,416h38v1h-38zM415,416h40v1h-40zM57,417h41v1h-41zM141,417h41v1h-41zM330,417h41v1h-41zM414,417h41v1h-41zM58,418h41v1h-41zM140,418h44v1h-44zM328,418h44v1h-44zM413,418h41v1h-41zM58,419h42v1h-42zM139,419h47v1h-47zM326,419h47v1h-47zM412,419h41v1h-41zM59,420h42v1h-42zM138,420h50v1h-50zM324,420h50v1h-50zM411,420h42v1h-42zM60,421h42v1h-42zM137,421h54v1h-54zM321,421h54v1h-54zM410,421h42v1h-42zM61,422h42v1h-42zM136,422h58v1h-58zM318,422h58v1h-58zM409,422h42v1h-42zM62,423h42v1h-42zM135,423h62v1h-62zM316,423h61v1h-61zM408,423h42v1h-42zM63,424h42v1h-42zM134,424h65v1h-65zM313,424h65v1h-65zM407,424h42v1h-42zM63,425h43v1h-43zM133,425h69v1h-69zM310,425h69v1h-69zM406,425h43v1h-43zM64,426h43v1h-43zM132,426h73v1h-73zM307,426h73v1h-73zM405,426h43v1h-43zM65,427h43v1h-43zM131,427h78v1h-78zM303,427h78v1h-78zM404,427h43v1h-43zM66,428h43v1h-43zM130,428h82v1h-82zM300,428h82v1h-82zM403,428h43v1h-43zM67,429h43v1h-43zM129,429h86v1h-86zM297,429h86v1h-86zM401,429h44v1h-44zM68,430h44v1h-44zM127,430h89v1h-89zM296,430h89v1h-89zM400,430h44v1h-44zM69,431h46v1h-46zM124,431h94v1h-94zM294,431h94v1h-94zM397,431h46v1h-46zM70,432h149v1h-149zM293,432h149v1h-149zM71,433h149v1h-149zM292,433h149v1h-149zM72,434h148v1h-148zM292,434h148v1h-148zM73,435h148v1h-148zM291,435h148v1h-148zM74,436h147v1h-147zM291,436h147v1h-147zM75,437h147v1h-147zM290,437h147v1h-147zM76,438h146v1h-146zM290,438h146v1h-146zM77,439h145v1h-145zM290,439h145v1h-145zM78,440h145v1h-145zM289,440h145v1h-145zM79,441h81v1h-81zM162,441h61v1h-61zM289,441h61v1h-61zM352,441h81v1h-81zM80,442h79v1h-79zM164,442h59v1h-59zM289,442h59v1h-59zM353,442h79v1h-79zM81,443h77v1h-77zM166,443h57v1h-57zM289,443h57v1h-57zM354,443h77v1h-77zM82,444h75v1h-75zM169,444h54v1h-54zM289,444h54v1h-54zM355,444h75v1h-75zM83,445h73v1h-73zM171,445h52v1h-52zM289,445h52v1h-52zM356,445h73v1h-73zM84,446h71v1h-71zM173,446h50v1h-50zM289,446h50v1h-50zM357,446h71v1h-71zM85,447h69v1h-69zM175,447h48v1h-48zM289,447h48v1h-48zM358,447h69v1h-69zM86,448h67v1h-67zM178,448h45v1h-45zM289,448h45v1h-45zM359,448h67v1h-67zM88,449h64v1h-64zM180,449h43v1h-43zM289,449h43v1h-43zM360,449h64v1h-64zM89,450h62v1h-62zM183,450h40v1h-40zM289,450h40v1h-40zM361,450h62v1h-62zM90,451h60v1h-60zM186,451h37v1h-37zM289,451h37v1h-37zM362,451h60v1h-60zM91,452h57v1h-57zM188,452h35v1h-35zM289,452h35v1h-35zM364,452h57v1h-57zM92,453h55v1h-55zM191,453h32v1h-32zM289,453h32v1h-32zM365,453h55v1h-55zM94,454h51v1h-51zM193,454h30v1h-30zM289,454h30v1h-30zM367,454h51v1h-51zM96,455h48v1h-48zM193,455h30v1h-30zM289,455h30v1h-30zM368,455h49v1h-49zM97,456h45v1h-45zM193,456h30v1h-30zM289,456h30v1h-30zM370,456h45v1h-45zM99,457h41v1h-41zM193,457h30v1h-30zM289,457h30v1h-30zM372,457h41v1h-41zM101,458h37v1h-37zM193,458h30v1h-30zM289,458h30v1h-30zM374,458h37v1h-37zM104,459h31v1h-31zM193,459h30v1h-30zM289,459h30v1h-30zM377,459h31v1h-31zM107,460h25v1h-25zM193,460h30v1h-30zM289,460h30v1h-30zM380,460h25v1h-25zM112,461h15v1h-15zM193,461h30v1h-30zM289,461h30v1h-30zM385,461h15v1h-15zM193,462h30v1h-30zM289,462h30v1h-30zM193,463h30v1h-30zM289,463h30v1h-30zM193,464h30v1h-30zM289,464h30v1h-30zM193,465h30v1h-30zM289,465h30v1h-30zM193,466h30v1h-30zM289,466h30v1h-30zM193,467h30v1h-30zM289,467h30v1h-30zM193,468h30v1h-30zM289,468h30v1h-30zM193,469h30v1h-30zM289,469h30v1h-30zM193,470h31v1h-31zM288,470h31v1h-31zM193,471h31v1h-31zM288,471h31v1h-31zM193,472h32v1h-32zM287,472h32v1h-32zM194,473h31v1h-31zM287,473h31v1h-31zM194,474h32v1h-32zM286,474h32v1h-32zM194,475h33v1h-33zM285,475h33v1h-33zM194,476h33v1h-33zM285,476h33v1h-33zM195,477h33v1h-33zM284,477h33v1h-33zM195,478h35v1h-35zM282,478h35v1h-35zM195,479h36v1h-36zM281,479h36v1h-36zM196,480h37v1h-37zM279,480h37v1h-37zM196,481h40v1h-40zM276,481h40v1h-40zM196,482h120v1h-120zM197,483h118v1h-118zM197,484h118v1h-118zM198,485h116v1h-116zM198,486h116v1h-116zM199,487h114v1h-114zM199,488h114v1h-114zM200,489h112v1h-112zM200,490h112v1h-112zM201,491h110v1h-110zM202,492h108v1h-108zM203,493h106v1h-106zM203,494h106v1h-106zM204,495h104v1h-104zM205,496h102v1h-102zM206,497h100v1h-100zM207,498h98v1h-98zM208,499h96v1h-96zM209,500h94v1h-94zM210,501h92v1h-92zM212,502h88v1h-88zM213,503h86v1h-86zM215,504h83v1h-83zM216,505h80v1h-80zM218,506h76v1h-76zM220,507h72v1h-72zM222,508h68v1h-68zM225,509h62v1h-62zM228,510h56v1h-56zM233,511h46v1h-46z" fill="#000"/>
+    </svg>
+  </div>
+
+</header>
+
+<main role="main" id="mainContent">
+  <div id="menu"></div>
+  <div id="products" role="list"></div>
+</main>
+
+<div id="cartBar">
+  <!-- <div id="total">Suma: 0 zł</div>
+  <button id="payBtn">View order list</button> -->
+
+  <div style="display:flex; gap:30px; align-items:center;">
+    
+    <div id="total" aria-live="polite" role="status">Suma: 0 zł</div>
+    <div id="cartInfo">(0 produktów)</div>
+  </div>
+
+  <button id="payBtn" class="no-audio" aria-label="Pokaż zawartość koszyka i przejdź do zamówienia">
+    Pokaż zamówienie
+  </button>
+
+</div>
+
+<!-- ===== PAYMENT / ORDER ===== -->
+<div id="payment" class="modal hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="paymentText">
+  <div class="modal-box">
+    <!-- <h2 id="paymentTitle">Przetwarzanie płatności</h2> -->
+    <h2 id="paymentText" class="terminal-status" aria-live="assertive" role="status" aria-atomic="true"></h2>
+    <div style="display:flex;justify-content:center;margin-top:20px;" id="orderNumber"></div>
+    
+    <!-- <img id="qrCode" width="260" height="260"> -->
+    <div style="display:flex;justify-content:center;margin-top:20px;" class="device-id-qr">
+        <div id="device-id-qr" aria-hidden="true"></div>
+        <div id="device-id-hint" class="qr-hint" role="note"
+     aria-live="polite">Zeskanuj, aby zobaczyć numer swojego zamówienia na telefonie</div>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-top:20px;">
+      <button id="doneBtn"
+        class="no-audio"
+        aria-label="Zakończ i wróć do menu głównego"
+        style="display:none;margin:20px auto 0;
+        font-size:26px;padding:18px 50px;
+        border-radius:50px;border:none;
+        background:var(--green);color:white;">
+        Gotowe (5)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PRODUCT CONFIGURATOR ===== -->
+<div id="productConfig" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="configTitle">
+  <div class="modal-box">
+    <h2 id="configTitle">Konfiguruj produkt</h2>
+
+    <div style="margin:20px 0;">
+      <fieldset>
+        <legend>Wariant</legend>
+
+        <label>
+          <input type="radio" name="variant" value="single">
+          Single
+        </label>
+
+        <label>
+          <input type="radio" name="variant" value="double">
+          Double (+4 zł)
+        </label>
+      </fieldset>
+    </div>
+
+    <div style="margin:20px 0;">
+      <fieldset>
+        <legend>Sos</legend>
+
+        <label>
+          <input type="radio" name="sauce" value="ketchup">
+          Ketchup
+        </label>
+
+        <label>
+          <input type="radio" name="sauce" value="bbq">
+          BBQ
+        </label>
+
+         <label>
+          <input type="radio" name="sauce" value="mayo">
+          Majonez
+        </label>
+      </fieldset>
+    </div>
+
+    <div style="display:flex;gap:20px;margin-top:30px;">
+      <button id="cancelConfigBtn"
+        style="flex:1;padding:18px;font-size:22px;
+        border-radius:16px;border:2px solid var(--red);
+        background:white;color:var(--red);">
+        Anuluj
+      </button>
+
+      <button id="saveConfigBtn"
+        style="flex:1;padding:18px;font-size:22px;
+        border-radius:16px;border:none;
+        background:var(--red);color:white;">
+        Zapisz
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== ORDER LIST ===== -->
+<div id="orderList" class="modal hidden" role="dialog"
+     aria-modal="true"
+     aria-labelledby="orderSummaryTitle">
+  <div class="modal-box">
+    <h2 id="orderSummaryTitle">Podsumowanie zamówienia</h2>
+
+    <div id="orderItems" style="margin:20px 0; font-size:24px;"></div>
+
+    <div id="orderTotal" style="font-size:28px; font-weight:600;"></div>
+
+    <div style="display:flex; gap:20px; margin-top:30px;">
+      <button id="backBtn" style="
+        flex:1;
+        padding:20px;
+        font-size:26px;
+        border-radius:16px;
+        border:2px solid var(--red);
+        background:white;
+        color:var(--red);
+      ">⬅ Cofnij</button>
+
+      <button id="payNowBtn" style="
+        flex:1;
+        padding:20px;
+        font-size:26px;
+        border-radius:16px;
+        border:none;
+        background:var(--red);
+        color:white;
+        display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+      "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+  <!-- karta -->
+  <rect x="4" y="14" width="56" height="36" rx="4" ry="4" fill="currentColor"/>
+  
+  <!-- pasek magnetyczny -->
+  <rect x="4" y="20" width="56" height="6" fill="#000" opacity="0.25"/>
+
+  <!-- chip -->
+  <rect x="10" y="30" width="12" height="10" rx="2" fill="#fff" opacity="0.9"/>
+  <rect x="13" y="30" width="1.5" height="10" fill="#ccc"/>
+  <rect x="17.5" y="30" width="1.5" height="10" fill="#ccc"/>
+
+  <!-- linia dolna -->
+  <rect x="26" y="34" width="28" height="3" rx="1.5" fill="#fff" opacity="0.6"/>
+</svg>
+ Zapłać</button>
+
+ <button id="orderNowBtn" style="
+        flex:1;
+        display: none;
+        padding:20px;
+        font-size:26px;
+        border-radius:16px;
+        border:none;
+        background:var(--red);
+        color:white;
+        display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+      "><svg class="order-icon" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <!-- koszyk -->
+    <path d="M6 10h6l6 28h26l6-18H18" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- koła -->
+    <circle cx="26" cy="50" r="4"/>
+    <circle cx="44" cy="50" r="4"/>
+    <!-- plus (dodaj) -->
+    <!-- <line x1="32" y1="18" x2="32" y2="28" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+    <line x1="27" y1="23" x2="37" y2="23" stroke="currentColor" stroke-width="4" stroke-linecap="round"/> -->
+  </svg>
+ Zamów</button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== INFO MODAL ===== -->
+<div id="infoModal" class="modal hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-describedby="infoText">
+  <div class="modal-box" style="text-align:center;">
+    <div id="infoText" style="font-size:26px;" aria-live="assertive" role="alert"></div>
+
+    <button id="infoOkBtn"
+      style="
+        margin-top:30px;
+        padding:18px 50px;
+        font-size:24px;
+        border-radius:50px;
+        border:none;
+        background:var(--yellow);
+        color:#000;
+        font-weight:600;
+      ">
+      OK
+    </button>
+  </div>
+</div>
+
+
+<!-- ===== AD SCREENSAVER ===== -->
+<div id="adScreen" class="ad hidden" aria-label="Ekran reklamowy. Dotknij aby wrócić.">
+ <iframe
+  id="adFrame"
+  title="Ekran reklamowy"
+  src=""
+  allow="autoplay; fullscreen">
+</iframe>
+</div>
+
+
+</body>
+</html>

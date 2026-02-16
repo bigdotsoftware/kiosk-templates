@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Big Dot Software - Matrix Screensaver</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/assets/orbitron.css">
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: black;
+        overflow: hidden;
+        font-family: 'Orbitron', 'Segoe UI', monospace;
+    }
+    html, body, * {
+      cursor: none !important;
+    }
+    canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        pointer-events: auto;
+    }
+
+    /* Logo overlay */
+    #logo-container {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    #logo-container img {
+        width: 420px;
+        max-width: 60vw;
+        opacity: 0.18;
+        /* filter: drop-shadow(0 0 30px rgba(255,0,0,0.35)); */
+    }
+
+</style>
+</head>
+
+<body>
+<link rel="stylesheet" href="/assets/orbitron.css">
+<canvas id="matrix"></canvas>
+
+<div id="logo-container">
+    <div id="logo-glow"></div>
+    <img src="http://kiosk.local/bigdotsoftware.png" alt="Big Dot Software Logo">
+</div>
+
+<script>
+
+let drawTimer = null;
+async function drawChars() {
+
+    await document.fonts.load('16px Orbitron');
+    await document.fonts.ready;
+
+    const canvas = document.getElementById('matrix');
+    // const charCtx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
+
+    
+    let width, height, columns, drops;
+    let frameCount = 0;
+    const fontSize = 26;
+    const useFillText = false;
+
+    // LITERY / ZNAKI – bazujące na Twoim brandingu
+    const brandChars = "BIGDOTSOFTWARE123456789".split("");
+
+    const charCache = {};
+
+    function buildCharCache(w,h) {
+        ctx.font = fontSize + "px Orbitron, monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        brandChars.forEach(ch => {
+            ctx.clearRect(0, 0, fontSize*2, fontSize*2);
+            ctx.fillStyle = "#ff2b2b";
+            ctx.fillText(ch, fontSize/2, fontSize/2);
+            const img = new Image();
+            img.src = canvas.toDataURL();
+            charCache[ch] = img;
+        });
+    }
+
+    buildCharCache(canvas.width, canvas.height);
+
+    const resize = () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        columns = Math.floor(width / fontSize);
+        drops = Array(columns).fill(1);
+    };
+
+
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    function draw() {
+
+        frameCount++;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+        ctx.fillRect(0, 0, width, height);
+
+        if( useFillText ) {
+            ctx.fillStyle = '#ff2b2b'; // czerwony jak logo
+            ctx.font = fontSize + "px Orbitron, monospace";
+        }
+        for (let i = 0; i < drops.length; i++) {
+            const text = brandChars[Math.floor(Math.random() * brandChars.length)];
+            if( useFillText ) {
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            }else{
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+
+                const img = charCache[text];
+                if (img) ctx.drawImage(img, x, y);
+            }
+            if (drops[i] * fontSize > height && Math.random() > 0.985) {
+                drops[i] = 0;
+            }
+
+            drops[i]++;
+        }
+    }
+    drawTimer = setInterval(draw, 80);
+}
+
+document.fonts.ready.then(() => {
+    drawChars();
+});
+</script>
+
+<!-- Opcjonalnie font futurystyczny -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+
+<script>
+    function exitScreensaver() {
+    // jeśli to iframe / screensaver jako overlay:
+    if (window.parent !== window) {
+        window.parent.postMessage("EXIT_SCREENSAVER", "*");
+    }
+    if( drawTimer ) {
+        clearInterval(drawTimer);
+        drawTimer = null;
+    }
+
+    // jeśli to samodzielna strona:
+    document.body.style.display = "none";
+}
+
+["click", "touchstart", "pointerdown"].forEach(evt => {
+    document.addEventListener(evt, () => {
+        exitScreensaver();
+    }, { once: true });
+});
+
+</script>
+</body>
+</html>
