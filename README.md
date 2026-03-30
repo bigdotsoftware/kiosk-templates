@@ -19,6 +19,85 @@ Zestaw nowoczesnych, responsywnych szablonów UI do zastosowania w kioskach samo
   - Kiosk automatycznie zsychnronizuje się z Twoim kontem B2B i wczyta wgrany szablon
   - Jeśli chcesz zbudować własny interfejs, a aktualny model szablonów nie daje takiej możliwości lub wymaga modyfikacji zachowania, skontaktuj się z nami. Alternatywnie możesz pominąć ładowanie pliku kiosk.js, dodać własny kod oraz przygotować jeden plik HTML zawierający wszystkie niezbędne zależności. Następnie wgraj go na swoje konto w panelu B2B: 👉 https://b2b.bigdotsoftware.eu, a Kiosk automatycznie zsynchronizuje się z Twoim kontem B2B i załaduje wgrany szablon.
 
+
+
+## 📦 Tutorial
+
+Ten krótki tutorial pokazuje, jak krok po kroku rozwijać własne szablony w prostym flow kiosku – od automatycznego dodania produktu aż po pełną obsługę zamówienia i płatności.
+
+### 🧩 Krok 1: Dodawanie produktu
+
+Za pomocą metody:
+
+```js
+kiosk.addToCart(product);
+```
+
+produkt zostaje dodany do koszyka. Następnie system automatycznie rozpoczyna proces zamówienia, płatności oraz wydruku.
+
+Przykładowy przycisk inicjujący:
+
+```html
+<button id="orderNowBtn">Zapłać</button>
+```
+
+Konieczne jest również wczytanie SDK kiosku:
+
+```html
+<script src="/kiosk.js" defer></script>
+```
+
+### 🧩 Krok 2: Pasek koszyka
+
+Dodaj element:
+
+```html
+<div id="cartBar"></div>
+```
+
+Element ten automatycznie wyświetla podsumowanie koszyka.
+
+
+### 🧩 Krok 3: Widok zamówienia
+
+Dodaj kontener:
+
+```html
+<div id="orderList" class="hidden"></div>
+```
+
+Służy on do prezentowania podsumowania koszyka. Zawiera trzy przyciski:
+
+```html
+<button id="backBtn">⬅ Produkty</button>
+<button id="payNowBtn">Zapłać</button>
+<button id="orderNowBtn">Zamów</button>
+```
+
+- **⬅ Produkty** – powrót do listy produktów  
+- **Zapłać** – przejście do płatności  
+- **Zamów** – SDK kiosku zadba o to aby był widoczny tylko wtedy, gdy kiosk nie posiada dostępnych metod płatności  
+
+
+### 🧩 Krok 4: Modale informacyjne
+
+Dodaj dwa elementy:
+
+```html
+<div id="infoModal" class="hidden"></div>
+<div id="resultModal" class="hidden"></div>
+```
+
+- `infoModal` – wyświetla informacje i błędy  
+- `resultModal` – prezentuje wynik zamówienia  
+
+Jeśli wczytane zostanie SDK do obsługi kodów QR, w `resultModal` automatycznie pojawi się wygenerowany kod QR.
+
+
+
+
+
+
 ## 📜 Licencja
 
 MIT – możesz używać komercyjnie, modyfikować i dystrybuować.
