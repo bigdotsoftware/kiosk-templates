@@ -17,19 +17,12 @@ TOKEN=$(curl -s -X POST http://$KIOSK_IP/api/login \
 echo "TOKEN=$TOKEN"
 
 # 2. Wprowadzaj ustawienia do Kiosku za pomoca API
-curl -X POST "http://$KIOSK_IP/api/settings-update-key" \
+RESPONSE=$(curl -s -X POST "http://$KIOSK_IP/api/device/logs/chromium" \
+  -d '{"lines": 10}' \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "path": "mode",
-    "value": "remote"
-  }'
+  -H "Authorization: Bearer $TOKEN")
 
-curl -X POST "http://$KIOSK_IP/api/settings-update-key" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "path": "mode_url",
-    "value": "https://bigdotsoftware.pl/test-integracja.html"
-  }'
-
+# Odczytaj i wyswietl logi
+echo "$RESPONSE" | jq -r '.log // empty' | while IFS= read -r line; do
+    echo "  $line"
+done
