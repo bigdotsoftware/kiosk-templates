@@ -97,9 +97,47 @@ Dodaj dwa elementy:
 
 Jeśli wczytane zostanie SDK do obsługi kodów QR, w `resultModal` automatycznie pojawi się wygenerowany kod QR.
 
+### 🧩 Krok 5: Integracja zaawansowana
 
+Jeśli standardowy przebieg płatności jest niewystarczający (np. potrzebna jest integracja z dodatkowym systemem lub debugowanie kolejnych etapów przetwarzania transakcji), istnieje możliwość wpięcia własnego kodu JavaScript w dowolnym punkcie procesu. Poniższy diagram przedstawia pełny flow przetwarzania płatności w kiosku — od inicjalizacji płatności na terminalu, przez utworzenie zamówienia, aż po fiskalizację na końcu.
 
+![Flow](kiosk-payment-flow.png)
 
+Zielone prostokąty reprezentują kolejne etapy procesu, natomiast pomarańczowe strzałki opisują nazwy emitowanych eventów. Aby w szablonie odbierać eventy z poszczególnych etapów, należy zarejestrować funkcję callback:
+
+```js
+kiosk.registerPaymentCallback(my_func);
+
+function my_func(event) {
+    var continueFlow = false;
+    if( event.type === 'step_order_start') {
+        // Rozpoczyna się tworzenie zamówienia
+        // Ewentualnie przerwać flow transakcji Kiosku ustawiając continueFlow=false
+    }
+    else if( event.type === 'step_order_end') {
+        // Zakończyło się tworzenie zamówienia
+        if( event.ok === true) {
+            // Etap zakonczył sie sukcesem
+            // W tym miejscu można wywołać dodatkowy backend
+            // Ewentualnie przerwać flow transakcji Kiosku ustawiając continueFlow=false
+        }else{
+            // Etap zakonczył sie bledem
+            console.log(`ERROR: ${JSON.stringify(event.data)}`);
+        }
+    }
+    return continueFlow;
+}
+```
+
+Można również zarejestrować funkcję asynchroniczną, w tym celu należy użyć registerPaymentCallbackAsync.
+
+```js
+kiosk.registerPaymentCallbackAsync(my_async_func);
+
+async function my_async_func(event) {
+
+}
+```
 
 
 ## 📜 Licencja

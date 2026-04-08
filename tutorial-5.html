@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pl-PL">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta http-equiv="Content-Language" content="pl">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+
+<title>Tutorial 5 - Zaawansowana integracja z flow płatności w Kiosku</title>
+
+<script src="/qrcode.js" defer></script>
+<script src="/kiosk.js" defer></script>
+
+<style>
+    .hidden { display: none !important; }
+</style>
+
+</head>
+
+<body>
+
+    <script>
+        function my_func(event) {
+            console.log(event);
+            if( !event.ok )
+                console.log(`ERROR: ${JSON.stringify(event.data)}`);
+
+            var continueFlow = true;
+            if( event.type === 'step_order_start') {
+                // Rozpoczyna się tworzenie zamówienia
+                // Ewentualnie przerwać flow transakcji Kiosku ustawiając continueFlow=false
+            }
+            else if( event.type === 'step_order_end') {
+                // Zakończyło się tworzenie zamówienia
+                if( event.ok === true) {
+                    // Etap zakonczył sie sukcesem
+                    // W tym miejscu można wywołać dodatkowy backend
+                    // Ewentualnie przerwać flow transakcji Kiosku ustawiając continueFlow=false
+                }else{
+                    // Etap zakonczył sie bledem
+                }
+            }
+            return continueFlow;
+        }
+        document.addEventListener("DOMContentLoaded", () => {
+            kiosk.registerPaymentCallback(my_func);
+        });
+
+        function dodajKolejnyProdukt() {
+            const product = { "name": "Cola Zero", "fiscalname": "", "vat": "A", "price": 7, "img": "http://kiosk.local/assets/kiosk/Cola-Zero.png" };
+            kiosk.addToCart(product);
+        }
+    </script>
+    
+
+    <button onclick="dodajKolejnyProdukt()">Dodaj produkt</button>
+
+    <div id="cartBar">
+  
+        <div style="display:flex; gap:30px; align-items:center;">
+            <div id="total">Suma: 0 zł</div>
+            <div id="cartInfo">(0 produktów)</div>
+        </div>
+
+        <button id="payBtn" class="no-audio">
+            Pokaż zamówienie
+        </button>
+    </div>
+
+
+    <div id="orderList" class="hidden">
+        <h2 id="orderSummaryTitle">Podsumowanie zamówienia</h2>
+        <div id="orderItems"></div>
+        <div id="orderTotal"></div>
+        <div>
+            <button id="backBtn">⬅ Produkty</button>
+            <button id="payNowBtn">Zapłać</button>
+            <button id="orderNowBtn">Zamów</button>
+        </div>
+    </div>
+
+
+    <!-- ===== INFO MODAL ===== -->
+    <div id="infoModal" class="hidden">
+        <div id="infoText"></div>
+        <button id="infoOkBtn">OK</button>
+    </div>
+
+
+    <!-- ===== PAYMENT / ORDER ===== -->
+    <div id="payment" class="hidden">
+        <h2 id="paymentText"></h2>
+        <div id="orderNumber"></div>
+        
+        <div>
+            <div id="device-id-qr" style="width: 300px;"></div>
+            <div id="device-id-hint">
+                Zeskanuj, aby zobaczyć numer swojego zamówienia na telefonie
+            </div>
+        </div>
+
+        <button id="doneBtn">Gotowe (5)</button>
+    </div>
+    
+</body>
