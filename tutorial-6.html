@@ -22,13 +22,16 @@
 
     <script>
         const APIHOST = '';
+        const PIN = '1111';   // Replace with actual PIN 
+        var TOKEN = '';
+
         async function api(url, data) {
             const r = await fetch(url, {
                 cache: "no-store",
                 method: data ? 'POST' : 'GET',
                 headers: {
                 'Content-Type': 'application/json',
-                //...(token ? {'Authorization': 'Bearer ' + token} : {})
+                ...(TOKEN ? {'Authorization': 'Bearer ' + TOKEN} : {})
                 },
                 body: data ? JSON.stringify(data) : null
             });
@@ -42,10 +45,37 @@
             }
             return jsondata;
         }
+
+        async function getPaymentDetails(paymentId) {
+            // Fetch payment details for the given payment UUID requires API in version 1.28+
+            return await api(`${APIHOST}/api/transaction-payment/${paymentId}`);
+        }
+
+        async function doLogin(pin) {
+            const response = await fetch(`${APIHOST}/api/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ pin: pin })
+            });
+
+            const LOGIN_RESPONSE = await response.text();
+
+            try {
+                TOKEN = JSON.parse(LOGIN_RESPONSE).token;
+            } catch (error) {
+                TOKEN = null;
+            }
+            if (!TOKEN) {
+                console.error('Login failed');
+                console.error(LOGIN_RESPONSE);
+            }
+        }
         async function transactionStart(amount) {
             const startTransaction = document.getElementById('startTransaction');
             startTransaction.disabled = true;
-
+            
             const resultTerminal = await api(
                 `${APIHOST}/api/transaction-terminal`, 
                 {
@@ -56,11 +86,19 @@
             console.log(JSON.stringify(resultTerminal));
             if( resultTerminal.ok ) {
                 alert("Transakcja zakończona pomyślnie.");
+                checkPaymentDetails(resultTerminal.paymentUUID);
             }else{
                 alert("Transakcja nieautoryzowana, lub przerwano transakcję: " + resultTerminal.message);
             }
             startTransaction.disabled = false;
         }
+
+        async function checkPaymentDetails(paymentUUID) {
+            await doLogin(PIN);
+            const resultPayment = await getPaymentDetails(paymentUUID);
+            console.log("Payment response:", resultPayment);
+        }
+        
     </script>
     
 
