@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pl-PL">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta http-equiv="Content-Language" content="pl">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+
+<title>Tutorial 7 - Fiskalizacja bez użycia wrappera kiosk.js</title>
+
+<style>
+    .hidden { display: none !important; }
+</style>
+
+</head>
+
+<body>
+
+    <script>
+        const APIHOST = '';
+        const PIN = '1111';   // Replace with actual PIN 
+        var TOKEN = '';
+
+        async function api(url, data) {
+            const r = await fetch(url, {
+                cache: "no-store",
+                method: data ? 'POST' : 'GET',
+                headers: {
+                'Content-Type': 'application/json',
+                ...(TOKEN ? {'Authorization': 'Bearer ' + TOKEN} : {})
+                },
+                body: data ? JSON.stringify(data) : null
+            });
+    
+            // console.log("API response status:", r.status);
+            const jsondata = await r.json();
+            console.log(jsondata);
+            console.log(JSON.stringify(jsondata));
+            if (r.status !== 200 && r.status !== 201) {
+                console.log("Nie można wykonać operacji. Poproś obsługę o pomoc.");
+            }
+            return jsondata;
+        }
+
+        async function fiscalStart(paymentUUID) {
+            const startFiscal = document.getElementById('startFiscal');
+            startFiscal.disabled = true;
+            
+            var fiscalPayload = {
+                "lines" : [
+                    { "na": "Towar 1", "il": 1.0, "vtn": "A","pr": 2350}, 
+                    { "na": "Towar 2", "il": 1.0, "vtn": "A","pr": 1150}
+                ],
+                "summary" : {
+                    "to": 3500
+                }
+            }
+
+            const resultFiscal = await api(
+                `${APIHOST}/api/transaction-fiscal?paymentUUID=${paymentUUID}`, 
+                {
+                    ...fiscalPayload
+                }
+              );
+            console.log("Fiscal response:", resultFiscal);
+            console.log(JSON.stringify(resultFiscal));
+            if( resultFiscal.ok ) {
+                alert("Paragon wydrukowany pomyślnie.");
+            }else{
+                alert("Nie udało się wydrukować paragonu: " + resultFiscal.message);
+            }
+            startFiscal.disabled = false;
+        }
+
+        
+    </script>
+    
+    <!-- PUT_PAYMENT_UUID_HERE is optional. when provided Kiosk will use it as a reference in internal database -->
+    <button id="startFiscal" onclick="fiscalStart('PUT_PAYMENT_UUID_HERE')">Wydrukuj paragon na kwotę 35 PLN</button>
+
+    
+</body>
