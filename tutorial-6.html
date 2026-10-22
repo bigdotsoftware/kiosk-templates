@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pl-PL">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta http-equiv="Content-Language" content="pl">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+
+<title>Tutorial 6 - Płatność na terminalu bez użycia wrappera kiosk.js</title>
+
+<style>
+    .hidden { display: none !important; }
+</style>
+
+</head>
+
+<body>
+
+    <script>
+        const APIHOST = '';
+        async function api(url, data) {
+            const r = await fetch(url, {
+                cache: "no-store",
+                method: data ? 'POST' : 'GET',
+                headers: {
+                'Content-Type': 'application/json',
+                //...(token ? {'Authorization': 'Bearer ' + token} : {})
+                },
+                body: data ? JSON.stringify(data) : null
+            });
+    
+            // console.log("API response status:", r.status);
+            const jsondata = await r.json();
+            console.log(jsondata);
+            console.log(JSON.stringify(jsondata));
+            if (r.status !== 200 && r.status !== 201) {
+                console.log("Nie można wykonać operacji. Poproś obsługę o pomoc.");
+            }
+            return jsondata;
+        }
+        async function transactionStart(amount) {
+            const startTransaction = document.getElementById('startTransaction');
+            startTransaction.disabled = true;
+
+            const resultTerminal = await api(
+                `${APIHOST}/api/transaction-terminal`, 
+                {
+                    amount: Math.round(amount*100.0)
+                }
+              );
+            console.log("Terminal response:", resultTerminal);
+            console.log(JSON.stringify(resultTerminal));
+            if( resultTerminal.ok ) {
+                alert("Transakcja zakończona pomyślnie.");
+            }else{
+                alert("Transakcja nieautoryzowana, lub przerwano transakcję: " + resultTerminal.message);
+            }
+            startTransaction.disabled = false;
+        }
+    </script>
+    
+
+    <button id="startTransaction" onclick="transactionStart(7.15)">Rozpocznij Transkacje na kwotę 7.15 PLN</button>
+
+    
+</body>
